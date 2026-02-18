@@ -71,9 +71,13 @@ TEMPLATES = [
 WSGI_APPLICATION = 'api_shop.wsgi.application'
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+    "default": {
+        "ENGINE": os.getenv("DB_ENGINE"),
+        "NAME": os.getenv("DB_NAME"),
+        "USER": os.getenv("DB_USER"),
+        "PASSWORD": os.getenv("DB_PASSWORD"),
+        "HOST": os.getenv("DB_HOST"),
+        "PORT": int(os.getenv("DB_PORT")),
     }
 }
 
@@ -114,7 +118,18 @@ REST_FRAMEWORK = {
     'DATE_INPUT_FORMATS': ['%d/%m/%Y'],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    "DEFAULT_RENDERER_CLASSES": [
+        "rest_framework.renderers.JSONRenderer",
+        "rest_framework.renderers.BrowsableAPIRenderer",
+    ],
 }
+
+CELERY_BROKER_URL = "redis://127.0.0.1:6379/0"
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
 
 SUPER_LOGIN = os.getenv('SUPER_LOGIN')
 SUPER_PASSWORD = os.getenv('SUPER_PASSWORD')
+
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
