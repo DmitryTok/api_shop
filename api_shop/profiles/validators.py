@@ -1,10 +1,17 @@
 import re
 from datetime import date
 
-from rest_framework.serializers import ValidationError
-from django.core.exceptions import ValidationError as DjangoValidationError
+from django.core.exceptions import ValidationError
 
 PHONE_E164_REGEX = re.compile(r"^\+\d{9,15}$", re.UNICODE)
+
+
+def int_enum_validator(value, enum_class):
+    if value not in (e.value for e in enum_class):
+        raise ValidationError(
+            f"{value} is not a valid type",
+            params={"value": value},
+        )
 
 
 def validate_phone(value: str | None) -> str | None:

@@ -1,13 +1,47 @@
 from django.db import models
 from django.contrib.auth import get_user_model
+from addons.int_enum import BaseIntEnumMixin
 from profiles.validators import validate_birthday, validate_phone
+from enum import IntEnum
 
 User = get_user_model()
 
 
+class Gender(BaseIntEnumMixin, IntEnum):
+    MALE = 1
+    FEMALE = 2
+
+
+class ClothingSize(BaseIntEnumMixin, IntEnum):
+    XS = 1
+    S = 2
+    M = 3
+    L = 4
+    XL = 5
+    XXl = 6
+
+
 class Profile(models.Model):
-    first_name = models.CharField(max_length=30)
-    last_name = models.CharField(max_length=30)
+    first_name = models.CharField(max_length=30, null=True, blank=True)
+    last_name = models.CharField(max_length=30, null=True, blank=True)
+    surname = models.CharField(max_length=30, null=True, blank=True)
+    gender = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        default=None,
+        choices=Gender.choices(),
+    )
+    clothing_size = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        default=None,
+        choices=ClothingSize.choices(),
+    )
+    shoe_size = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        default=None,
+    )
     birthday = models.DateField(
         null=True, blank=True, validators=[validate_birthday]
     )
@@ -20,4 +54,4 @@ class Profile(models.Model):
     )
 
     def __str__(self):
-        return f"{self.first_name} {self.last_name}"
+        return f"{self.user.email}"
