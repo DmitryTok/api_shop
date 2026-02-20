@@ -1,8 +1,9 @@
-from django.db import models
-from django.contrib.auth import get_user_model
-from addons.int_enum import BaseIntEnumMixin
-from profiles.validators import validate_birthday, validate_phone
 from enum import IntEnum
+
+from addons.int_enum import BaseIntEnumMixin
+from django.contrib.auth import get_user_model
+from django.db import models
+from profiles.validators import validate_birthday, validate_phone
 
 User = get_user_model()
 
