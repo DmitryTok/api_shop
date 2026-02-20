@@ -1,6 +1,3 @@
-from django.core.exceptions import ValidationError
-
-
 class BaseIntEnumMixin:
     @classmethod
     def choices(cls):
