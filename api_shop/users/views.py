@@ -2,11 +2,13 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import default_token_generator
 from django.shortcuts import get_object_or_404
 from django.utils.http import urlsafe_base64_decode
+from profiles.models import Profile
+from profiles.serializers import ProfileSerializer
 from rest_framework import status
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from users.serializers import UserRegisterSerializer, UserSerializer
+from users.serializers import UserRegisterSerializer
 from users.services.email import send_activation_email
 
 User = get_user_model()
@@ -24,19 +26,17 @@ class RegistrationView(APIView):
         send_activation_email(new_user, self.request)
 
         return Response(
-            UserSerializer(new_user).data, status=status.HTTP_201_CREATED
+            "Activation email has been sended", status=status.HTTP_201_CREATED
         )
 
 
 class CurrentUserView(APIView):
-    def get(self, request, *args, **kwargs):
-        if not request.user.is_authenticated:
-            return Response(
-                {"detail": "Authentication credentials were not provided."},
-                status=status.HTTP_401_UNAUTHORIZED,
-            )
+    permission_classes = [IsAuthenticatedOrReadOnly]
 
-        serializer = UserSerializer(request.user)
+    def get(self, request, *args, **kwargs):
+        query = get_object_or_404(Profile, user=request.user)
+        print(query)
+        serializer = ProfileSerializer(query)
         return Response(serializer.data)
 
 
@@ -50,6 +50,12 @@ class ActivateUserView(APIView):
         except (TypeError, ValueError, OverflowError, User.DoesNotExist):
             return Response(
                 {"error": "Invalid link"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if user.is_active:
+            return Response(
+                {"error": "Account already activated"},
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         if default_token_generator.check_token(user, token):
