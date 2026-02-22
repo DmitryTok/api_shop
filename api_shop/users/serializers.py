@@ -1,8 +1,50 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
+from django.db.models import Q
 from rest_framework import serializers
+from rest_framework_simplejwt.tokens import RefreshToken
 
 User = get_user_model()
+
+
+class CustomTokenObtainPairSerializer(serializers.Serializer):
+    email_or_phone = serializers.CharField(write_only=True)
+    password = serializers.CharField(write_only=True)
+
+    access = serializers.CharField(read_only=True)
+    refresh = serializers.CharField(read_only=True)
+
+    def validate(self, attrs):
+        login = attrs.get("email_or_phone")
+        password = attrs.get("password")
+
+        if not login or not password:
+            raise serializers.ValidationError(
+                {"detail": "Both email_or_phone and password are required"}
+            )
+
+        try:
+            user_obj = User.objects.get(
+                Q(email=login) | Q(profile__phone=login)
+            )
+        except User.DoesNotExist:
+            raise serializers.ValidationError(
+                {"detail": "No active account found with given credentials"}
+            )
+
+        if not user_obj.check_password(password):
+            raise serializers.ValidationError({"detail": "Invalid password"})
+
+        if not user_obj.is_active:
+            raise serializers.ValidationError(
+                {"detail": "User account is inactive"}
+            )
+
+        refresh = RefreshToken.for_user(user_obj)
+        return {
+            "refresh": str(refresh),
+            "access": str(refresh.access_token),
+        }
 
 
 class UserRegisterSerializer(serializers.ModelSerializer):

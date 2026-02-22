@@ -8,7 +8,10 @@ from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from users.serializers import UserRegisterSerializer
+from users.serializers import (
+    CustomTokenObtainPairSerializer,
+    UserRegisterSerializer
+)
 from users.services.email import send_activation_email
 
 User = get_user_model()
@@ -35,7 +38,6 @@ class CurrentUserView(APIView):
 
     def get(self, request, *args, **kwargs):
         query = get_object_or_404(Profile, user=request.user)
-        print(query)
         serializer = ProfileSerializer(query)
         return Response(serializer.data)
 
@@ -68,3 +70,13 @@ class ActivateUserView(APIView):
         return Response(
             {"error": "Invalid token"}, status=status.HTTP_400_BAD_REQUEST
         )
+
+
+class CustomTokenObtainPairView(APIView):
+    serializer_class = CustomTokenObtainPairSerializer
+    permission_classes = [AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        return Response(serializer.validated_data, status=status.HTTP_200_OK)
