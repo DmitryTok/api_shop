@@ -2,6 +2,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from django.db.models import Q
 from rest_framework import serializers
+from rest_framework.generics import get_object_or_404
 from rest_framework_simplejwt.tokens import RefreshToken
 
 User = get_user_model()
@@ -83,3 +84,39 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ("id", "email", "is_active")
         read_only_fields = ("id", "email", "is_active")
+
+
+class PasswordResetRequestSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+    def validate_email(self, value):
+        get_object_or_404(User, email=value)
+        return value
+
+
+class PasswordResetConfirmSerializer(serializers.Serializer):
+    new_password = serializers.CharField(
+        required=True, validators=[validate_password]
+    )
+    confirm_password = serializers.CharField(required=True)
+
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop("user", None)
+        super().__init__(*args, **kwargs)
+
+    def validate(self, attrs):
+        new_password = attrs["new_password"]
+        confirm_password = attrs["confirm_password"]
+
+        if new_password != confirm_password:
+            raise serializers.ValidationError(
+                {"confirm_password": "Password fields didn't match."}
+            )
+
+        return attrs
+
+    def save(self):
+        password = self.validated_data["new_password"]
+        self.user.set_password(password)
+        self.user.save()
+        return self.user
