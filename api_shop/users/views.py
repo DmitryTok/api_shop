@@ -10,11 +10,16 @@ from django.utils.http import urlsafe_base64_decode
 from profiles.models import Profile
 from profiles.serializers import ProfileSerializer
 from rest_framework import status
-from rest_framework.permissions import AllowAny, IsAuthenticatedOrReadOnly
+from rest_framework.permissions import (
+    AllowAny,
+    IsAuthenticated,
+    IsAuthenticatedOrReadOnly
+)
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from users.serializers import (
     CustomTokenObtainPairSerializer,
+    PasswordChangeSerializer,
     PasswordResetConfirmSerializer,
     PasswordResetRequestSerializer,
     UserRegisterSerializer
@@ -198,4 +203,21 @@ class PasswordResetConfirmView(APIView):
 
         return Response(
             {"detail": "Invalid token."}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+
+class PasswordChangeView(APIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = PasswordChangeSerializer
+
+    def post(self, request):
+        serializer = PasswordChangeSerializer(
+            data=request.data, context={"request": request}
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response(
+            {"detail": "Password has been changed successfully"},
+            status=status.HTTP_200_OK,
         )
