@@ -16,7 +16,7 @@ class CustomTokenObtainPairSerializer(serializers.Serializer):
     refresh = serializers.CharField(read_only=True)
 
     def validate(self, attrs):
-        login = attrs.get("email_or_phone")
+        login = attrs.get("email_or_phone").lower().strip()
         password = attrs.get("password")
 
         if not login or not password:
@@ -50,21 +50,35 @@ class CustomTokenObtainPairSerializer(serializers.Serializer):
 
 class UserRegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(
-        write_only=True, required=True, validators=[validate_password]
+        write_only=True,
+        required=True,
     )
     confirm_password = serializers.CharField(
-        write_only=True, required=True, validators=[validate_password]
+        write_only=True,
+        required=True,
     )
 
     class Meta:
         model = User
         fields = ("email", "password", "confirm_password")
 
+    def validate_email(self, value):
+        lower_email = value.lower()
+        if User.objects.filter(email__iexact=lower_email).exists():
+            raise serializers.ValidationError(
+                "A user with this email already exists."
+            )
+        return lower_email
+
     def validate(self, data):
         if data["password"] != data["confirm_password"]:
             raise serializers.ValidationError(
                 {"password": "Password fields do not match."}
             )
+        try:
+            validate_password(data['password'])
+        except serializers.ValidationError as e:
+            raise serializers.ValidationError({"password": list(e.messages)})
         return data
 
     def create(self, validated_data):
@@ -72,7 +86,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         validated_data.pop("confirm_password", None)
 
         user = User.objects.create_user(
-            email=validated_data["email"],
+            email=validated_data["email"].lower(),
             password=password,
             is_active=False,
         )
@@ -98,7 +112,9 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
     new_password = serializers.CharField(
         required=True, validators=[validate_password]
     )
-    confirm_password = serializers.CharField(required=True)
+    confirm_password = serializers.CharField(
+        required=True, validators=[validate_password]
+    )
 
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop("user", None)
@@ -120,3 +136,48 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
         self.user.set_password(password)
         self.user.save()
         return self.user
+
+
+class PasswordChangeSerializer(serializers.Serializer):
+    old_password = serializers.CharField(required=True, write_only=True)
+    new_password = serializers.CharField(
+        required=True,
+        write_only=True,
+        validators=[validate_password],
+    )
+    confirm_password = serializers.CharField(
+        required=True,
+        write_only=True,
+    )
+
+    def validate(self, attrs):
+        user = self.context["request"].user
+
+        old_password = attrs.get("old_password")
+        new_password = attrs.get("new_password")
+        confirm_password = attrs.get("confirm_password")
+
+        if not user.check_password(old_password):
+            raise serializers.ValidationError(
+                {"old_password": "Password not correct"}
+            )
+
+        if user.check_password(new_password):
+            raise serializers.ValidationError(
+                {
+                    "new_password": "New password cannot be the same as the old password"
+                }
+            )
+
+        if new_password != confirm_password:
+            raise serializers.ValidationError(
+                {"confirm_password": "Password fields didn't match"}
+            )
+
+        return attrs
+
+    def save(self, **kwargs):
+        user = self.context["request"].user
+        user.set_password(self.validated_data["new_password"])
+        user.save()
+        return user

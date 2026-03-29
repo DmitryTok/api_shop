@@ -2,6 +2,7 @@ from django.urls import path
 from users.views import (
     ActivateUserView,
     CurrentUserView,
+    PasswordChangeView,
     PasswordResetConfirmView,
     PasswordResetRequestView,
     RegistrationView
@@ -24,5 +25,10 @@ urlpatterns = [
         "password-reset-confirm/<str:uidb64>/<str:token>/",
         PasswordResetConfirmView.as_view(),
         name="password_reset_confirm",
+    ),
+    path(
+        "password-change/",
+        PasswordChangeView.as_view(),
+        name="password_change",
     ),
 ]
