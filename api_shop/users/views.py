@@ -17,8 +17,10 @@ from rest_framework.permissions import (
 )
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework_simplejwt.views import TokenRefreshView
 from users.serializers import (
     CustomTokenObtainPairSerializer,
+    CustomTokenRefreshSerializer,
     PasswordChangeSerializer,
     PasswordResetConfirmSerializer,
     PasswordResetRequestSerializer,
@@ -35,6 +37,10 @@ from api_shop.settings import (
 )
 
 User = get_user_model()
+
+
+class CustomTokenRefreshView(TokenRefreshView):
+    serializer_class = CustomTokenRefreshSerializer
 
 
 class RegistrationView(APIView):
