@@ -25,6 +25,8 @@ CORS_ALLOWED_ORIGINS = [
 
 ALLOWED_HOSTS = ['*']
 
+APPEND_SLASH = True
+
 
 # Application definition
 
@@ -127,6 +129,7 @@ REST_FRAMEWORK = {
     'DATE_FORMAT': '%d/%m/%Y',
     'DATE_INPUT_FORMATS': ['%d/%m/%Y'],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
+    'PAGE_SIZE': 15,
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     "DEFAULT_RENDERER_CLASSES": [
         "rest_framework.renderers.JSONRenderer",
