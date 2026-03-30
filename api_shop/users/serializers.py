@@ -3,9 +3,23 @@ from django.contrib.auth.password_validation import validate_password
 from django.db.models import Q
 from rest_framework import serializers
 from rest_framework.generics import get_object_or_404
+from rest_framework_simplejwt.exceptions import InvalidToken
+from rest_framework_simplejwt.serializers import TokenRefreshSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 
 User = get_user_model()
+
+
+class CustomTokenRefreshSerializer(TokenRefreshSerializer):
+    def validate(self, attrs):
+        try:
+            data = super().validate(attrs)
+        except User.DoesNotExist:
+            raise InvalidToken("User not found")
+        except Exception as e:
+            raise e
+
+        return data
 
 
 class CustomTokenObtainPairSerializer(serializers.Serializer):
