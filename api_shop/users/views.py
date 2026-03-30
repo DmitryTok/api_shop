@@ -10,11 +10,7 @@ from django.utils.http import urlsafe_base64_decode
 from profiles.models import Profile
 from profiles.serializers import ProfileSerializer
 from rest_framework import status
-from rest_framework.permissions import (
-    AllowAny,
-    IsAuthenticated,
-    IsAuthenticatedOrReadOnly
-)
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenRefreshView
@@ -60,7 +56,7 @@ class RegistrationView(APIView):
 
 
 class CurrentUserView(APIView):
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
         query = get_object_or_404(Profile, user=request.user)

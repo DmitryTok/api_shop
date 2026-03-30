@@ -49,7 +49,6 @@ class Profile(models.Model):
     phone = models.CharField(
         max_length=15, null=True, blank=True, validators=[validate_phone]
     )
-    # city =
 
     user = models.OneToOneField(
         User, on_delete=models.CASCADE, related_name="profile"
