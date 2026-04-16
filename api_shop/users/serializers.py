@@ -85,12 +85,21 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         return lower_email
 
     def validate(self, data):
-        if data["password"] != data["confirm_password"]:
+        user_password = data.get("password", "")
+        confirm_password = data.get("confirm_password", "")
+
+        if " " in user_password or user_password != user_password.strip():
+            raise serializers.ValidationError(
+                {"password": "Password must not contain spaces."}
+            )
+
+        if user_password != confirm_password:
             raise serializers.ValidationError(
                 {"password": "Password fields do not match."}
             )
+
         try:
-            validate_password(data['password'])
+            validate_password(user_password)
         except serializers.ValidationError as e:
             raise serializers.ValidationError({"password": list(e.messages)})
         return data
