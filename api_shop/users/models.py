@@ -35,6 +35,16 @@ class CustomUserManager(BaseUserManager):
         return self._create_user(email, password, **extra_fields)
 
 
+class Term(models.Model):
+    version = models.CharField(max_length=20, unique=True)
+    text = models.TextField(max_length=2000)
+    is_active = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Terms {self.version}"
+
+
 class CustomUser(AbstractUser):
     email = models.EmailField(unique=True, validators=[validate_email])
     is_active = models.BooleanField(default=False)
@@ -47,3 +57,15 @@ class CustomUser(AbstractUser):
 
     class Meta:
         db_table = 'users'
+
+
+class UserTermsAcceptance(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    terms = models.ForeignKey(Term, on_delete=models.CASCADE)
+    accepted_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Acceptance by {self.user.email} ({self.accepted_at.strftime('%d/%m/%Y')})"
+
+    class Meta:
+        unique_together = ('user', 'terms')

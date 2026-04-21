@@ -1,11 +1,13 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
+from django.db import transaction
 from django.db.models import Q
 from rest_framework import serializers
 from rest_framework.generics import get_object_or_404
 from rest_framework_simplejwt.exceptions import InvalidToken
 from rest_framework_simplejwt.serializers import TokenRefreshSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
+from users.models import Term, UserTermsAcceptance
 
 User = get_user_model()
 
@@ -71,10 +73,11 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         write_only=True,
         required=True,
     )
+    accept_terms = serializers.BooleanField(write_only=True, required=True)
 
     class Meta:
         model = User
-        fields = ("email", "password", "confirm_password")
+        fields = ("email", "password", "confirm_password", "accept_terms")
 
     def validate_email(self, value):
         lower_email = value.lower()
@@ -83,6 +86,13 @@ class UserRegisterSerializer(serializers.ModelSerializer):
                 "A user with this email already exists."
             )
         return lower_email
+
+    def validate_accept_terms(self, value):
+        if value is not True:
+            raise serializers.ValidationError(
+                "You must accept the user agreement."
+            )
+        return value
 
     def validate(self, data):
         user_password = data.get("password", "")
@@ -105,14 +115,24 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         return data
 
     def create(self, validated_data):
-        password = validated_data.pop("password", None)
-        validated_data.pop("confirm_password", None)
+        password = validated_data.pop("password")
+        validated_data.pop("confirm_password")
+        accept_terms = validated_data.pop("accept_terms")
 
-        user = User.objects.create_user(
-            email=validated_data["email"].lower(),
-            password=password,
-            is_active=False,
-        )
+        with transaction.atomic():
+            user = User.objects.create_user(
+                email=validated_data["email"].lower(),
+                password=password,
+                is_active=False,
+            )
+
+            if accept_terms:
+                terms = Term.objects.filter(is_active=True).latest(
+                    "created_at"
+                )
+
+                UserTermsAcceptance.objects.create(user=user, terms=terms)
+
         return user
 
 
