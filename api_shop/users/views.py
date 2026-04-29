@@ -13,6 +13,7 @@ from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenRefreshView
 from users.serializers import (
@@ -44,9 +45,20 @@ class CustomTokenRefreshView(TokenRefreshView):
     def post(self, request, *args, **kwargs):
         user_refresh_token = request.data.get("refresh")
 
-        token = RefreshToken(user_refresh_token, verify=False)
+        if not user_refresh_token:
+            return Response(
+                {"detail": "Refresh token is required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        try:
+            token = RefreshToken(user_refresh_token, verify=False)
+            user_ip = token.get('user_id')
 
-        user_ip = token.get('user_id')
+        except TokenError:
+            return Response(
+                {"detail": "Invalid refresh token."},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
 
         cache_key = f"refresh_limit_{user_ip}"
         block_key = f"refresh_block_{user_ip}"
