@@ -1,26 +1,28 @@
 from django.db import models
 from django.utils.text import slugify
-
-
-class TimeStampedModel(models.Model):
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        abstract = True
-
+from addons.models import TimeStampedModel
 
 class Category(TimeStampedModel):
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, unique=True)
     slug = models.SlugField(unique=True)
     is_active = models.BooleanField(default=True)
     is_hidden = models.BooleanField(default=False)
 
     def save(self, *args, **kwargs):
         if self.name:
-            self.name = self.name.strip()
+           self.name = self.name.strip()
+
         if not self.slug:
-            self.slug = slugify(self.name)
+           base_slug = slugify(self.name)
+           slug = base_slug
+           counter = 1
+
+           while Category.objects.filter(slug=slug).exists():
+               slug = f"{base_slug}-{counter}"
+               counter += 1
+
+           self.slug = slug
+
         super().save(*args, **kwargs)
 
     def __str__(self):
