@@ -11,4 +11,4 @@ def handler_404(request, exception):
     )
 
 
-handler404 = 'my_app.views.error_404_view'
+handler404 = 'addons.errorhandlers.handler_404'

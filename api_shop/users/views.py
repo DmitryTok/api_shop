@@ -204,8 +204,16 @@ class PasswordResetConfirmView(APIView):
     def post(self, request, *args, **kwargs):
         uidb64 = kwargs.get("uidb64")
         token = kwargs.get("token")
-        uid = force_str(urlsafe_base64_decode(uidb64))
-        user = get_object_or_404(User, pk=uid)
+
+        try:
+            uid = force_str(urlsafe_base64_decode(uidb64))
+            user = get_object_or_404(User, pk=uid)
+
+        except UnicodeDecodeError:
+            return Response(
+                {"detail": "Invalid uidb64."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         token_generator = PasswordResetTokenGenerator()
 

@@ -6,6 +6,7 @@ from django.utils.translation import gettext as _
 
 class RegexPasswordValidator:
     def validate(self, password, user=None):
+
         if len(password) < 8:
             raise ValidationError(
                 _(
@@ -20,6 +21,14 @@ class RegexPasswordValidator:
                     "This password is too long. It must not exceed 128 characters."
                 ),
                 code='password_too_long',
+            )
+
+        if not re.fullmatch(r'[A-Za-z0-9!@#$%^&*(),.?":{}|<>]*', password):
+            raise ValidationError(
+                _(
+                    "Password must contain only Latin letters, numbers, and standard symbols."
+                ),
+                code='password_invalid_characters',
             )
 
         if not re.search(r'[A-Z]', password):
