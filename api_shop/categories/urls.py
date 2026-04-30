@@ -1,5 +1,5 @@
 from rest_framework.routers import DefaultRouter
-from categories.views import CategoryViewSet
+from api_shop.categories.views import CategoryViewSet
 
 router = DefaultRouter()
 router.register("categories", CategoryViewSet)
