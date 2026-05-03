@@ -20,7 +20,10 @@ services:
   web:
     build: .
     command: >
-     bash -c "python manage.py makemigrations && python manage.py migrate && python manage.py createsuperuser --noinput || true && python manage.py runserver 0.0.0.0:8000
+      bash -c "cd api_shop &&
+               python manage.py migrate &&
+               python manage.py runserver 0.0.0.0:8000"
+  
     volumes:
       - .:/app
       - static_value:/static/
