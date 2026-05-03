@@ -8,7 +8,6 @@ from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env")
-print("DB_PORT:", os.getenv("DB_PORT"))
 
 SECRET_KEY = os.getenv('SECRET')
 
@@ -147,9 +146,13 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
+    'DEFAULT_RENDERER_CLASSES': [
+    'rest_framework.renderers.JSONRenderer',
+],
     "DEFAULT_FILTER_BACKENDS": [
     "django_filters.rest_framework.DjangoFilterBackend"
 ],
+
 }
 
 CELERY_BROKER_URL = "redis://127.0.0.1:6379/0"
