@@ -3,6 +3,7 @@ from .models import Category
 from addons.slugify import generate_slug
 
 class CategorySerializer(serializers.ModelSerializer):
+    slug = serializers.CharField(required=False)
 
     def validate_name(self, value):
         if not value:
@@ -19,7 +20,10 @@ class CategorySerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         name = validated_data.get("name")
-        validated_data["slug"] = generate_slug(name)
+
+        if not validated_data.get("slug"):
+           validated_data["slug"] = generate_slug(name)
+
         return super().create(validated_data)
     
     def update(self, instance, validated_data):
