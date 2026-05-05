@@ -6,5 +6,5 @@ from categories.serializers import CategorySerializer
 class CategoryViewSet(ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    lookup_field = "slug"
+    lookup_field = "id"
     
