@@ -7,6 +7,14 @@ class Category(TimeStampMixin):
     slug = models.SlugField(unique=True)
     is_active = models.BooleanField(default=True)
     is_hidden = models.BooleanField(default=False)
+    
+    parent = models.ForeignKey(
+        "self",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="children"
+    )
 
     def save(self, *args, **kwargs):
         if self.name:
