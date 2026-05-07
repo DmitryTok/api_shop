@@ -6,7 +6,7 @@ from addons.utils import getenv_int
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-load_dotenv(BASE_DIR / ".env")
+load_dotenv(BASE_DIR.parent / ".env")
 
 SECRET_KEY = os.getenv('SECRET')
 
@@ -47,7 +47,7 @@ if RENDER_EXTERNAL_HOSTNAME:
 APPEND_SLASH = True
 
 
-# Application definition
+
 
 INSTALLED_APPS = [
     'jazzmin',
