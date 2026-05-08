@@ -20,11 +20,7 @@ services:
   web:
     build: .
     command: >
-      bash -c "
-      python api_shop/manage.py migrate &&
-      python api_shop/manage.py runserver 0.0.0.0:8000
-      "
-  
+      bash -c "python api_shop/manage.py makemigrations && python api_shop/manage.py migrate && python api_shop/manage.py create_default_superuser && python api_shop/manage.py runserver 0.0.0.0:8000"
     volumes:
       - .:/app
       - static_value:/static/
@@ -34,9 +30,14 @@ services:
     env_file:
       - ./.env
     depends_on:
-      - db
-        
+      db:
+        condition: service_healthy
 
+  mailpit:
+    image: axllent/mailpit:latest
+    ports:
+      - "1025:1025"
+      - "8025:8025"
 
 volumes:
   static_value:

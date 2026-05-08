@@ -2,16 +2,15 @@ import os
 from datetime import timedelta
 from pathlib import Path
 
+from addons.utils import getenv_bool, getenv_int
 from dotenv import load_dotenv
-
-
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env")
 
 SECRET_KEY = os.getenv('SECRET')
 
-DEBUG = False
+DEBUG = True
 
 DEBUG_TOOLBAR_CONFIG = {
     'SHOW_TOOLBAR_CALLBACK': lambda request: True,
@@ -87,7 +86,7 @@ DATABASES = {
         'USER': os.getenv('DB_USER'),
         'PASSWORD': os.getenv('DB_PASSWORD'),
         'HOST': os.getenv('DB_HOST'),
-        'PORT': int(os.getenv('DB_PORT')),
+        'PORT': getenv_int('DB_PORT'),
     }
 }
 
@@ -132,30 +131,21 @@ MEDIA_URL = 'media/'
 REST_FRAMEWORK = {
     'DATE_FORMAT': '%d/%m/%Y',
     'DATE_INPUT_FORMATS': ['%d/%m/%Y'],
-
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.AllowAny',
     ],
-
     'PAGE_SIZE': 15,
-
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
-
     'DEFAULT_RENDERER_CLASSES': [
         'rest_framework.renderers.JSONRenderer',
         'rest_framework.renderers.BrowsableAPIRenderer',
     ],
-
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
-    'DEFAULT_RENDERER_CLASSES': [
-    'rest_framework.renderers.JSONRenderer',
-],
     "DEFAULT_FILTER_BACKENDS": [
-    "django_filters.rest_framework.DjangoFilterBackend"
-],
-
+        "django_filters.rest_framework.DjangoFilterBackend"
+    ],
 }
 
 CELERY_BROKER_URL = "redis://127.0.0.1:6379/0"
@@ -169,6 +159,19 @@ SUPER_PASSWORD = os.getenv('SUPER_PASSWORD')
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+EMAIL_BACKEND = os.getenv(
+    "EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend"
+)
+EMAIL_HOST = os.getenv("EMAIL_HOST", "localhost")
+EMAIL_PORT = getenv_int("EMAIL_PORT", 25)
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
+EMAIL_USE_TLS = getenv_bool("EMAIL_USE_TLS")
+EMAIL_USE_SSL = getenv_bool("EMAIL_USE_SSL")
+ALGORITHM = os.getenv('ALGORITHM')
+
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "kinoshort@support.com")
+
 ALGORITHM = os.getenv('ALGORITHM')
 
 DEFAULT_FROM_EMAIL = "shop@support.com"

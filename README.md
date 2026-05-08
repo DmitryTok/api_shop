@@ -35,21 +35,6 @@ SUPER_PASSWORD=superuser-password
 docker compose up --build --force-recreate
 ```
 
-### Admin panel will be available
-
-http://localhost:8080/admin/
-
-- login: SUPER_LOGIN
-- password: SUPER_PASSWORD
-
-### After all application wil be available
-
-http://localhost:8080/api/schema/swagger-ui/
-
-### For check a documentation u can follow
-
-http://localhost:8080/api/schema/redoc/
-
 ---
 
 ### To stop container
@@ -68,4 +53,20 @@ docker-compose stop
 
 ```
 docker-compose down -v
+```
+
+# Links
+
+```text
+--------------------------------------------------------------|
+| Resource    |                      URL                      |
+| ----------- | --------------------------------------------- |
+| Admin Panel |  http://localhost:8080/admin/                 |
+| --------    | --------------------------------------------- |
+| Swagger     |  http://localhost:8080/api/schema/swagger-ui/ |
+| --------    | --------------------------------------------- |
+| Redoc       |  http://localhost:8080/api/schema/redoc/      |
+| --------    | --------------------------------------------- |
+| Mailpit     |  http://localhost:8025                        |
+| --------    | --------------------------------------------- |
 ```
