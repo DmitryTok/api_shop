@@ -117,9 +117,16 @@ class CurrentUserView(APIView):
 
 
 class ActivateUserView(APIView):
+    serializer_class = None
     permission_classes = [AllowAny]
 
+    def get(self, request, uidb64, token):
+        return self.activate_user(uidb64, token)
+
     def patch(self, request, uidb64, token):
+        return self.activate_user(uidb64, token)
+
+    def activate_user(self, uidb64, token):
         try:
             uid = urlsafe_base64_decode(uidb64).decode()
             user = get_object_or_404(User, pk=uid)
