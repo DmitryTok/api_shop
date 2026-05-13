@@ -1,11 +1,11 @@
 from rest_framework import serializers
 from .models import Category
+from addons.slugify import generate_unique_slug
 
 
 class CategorySerializer(serializers.ModelSerializer):
     slug = serializers.CharField(required=False)
     
-
     def validate_name(self, value):
         if not value:
             raise serializers.ValidationError("Name cannot be empty")
@@ -14,6 +14,15 @@ class CategorySerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Name too short")
 
         return value
+
+    def create(self, validated_data):
+        if not validated_data.get("slug"):
+            validated_data["slug"] = generate_unique_slug(
+                Category,
+                validated_data["name"]
+            )
+
+        return super().create(validated_data)
 
     class Meta:
         model = Category
