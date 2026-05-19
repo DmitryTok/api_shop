@@ -41,7 +41,7 @@ class CustomTokenObtainPairSerializer(serializers.Serializer):
             )
 
         try:
-            user_obj = User.objects.get(
+            user_obj = User.objects.filter(is_active=True).get(
                 Q(email=login) | Q(profile__phone=login)
             )
         except User.DoesNotExist:

@@ -8,6 +8,7 @@ class CustomUserAdmin(admin.ModelAdmin):
     list_display = ('id', 'email')
     search_fields = ('id', 'email')
     list_filter = ('id', 'email')
+    exclude = ('groups', 'user_permissions', 'password')
 
 
 admin.site.register(Term)
