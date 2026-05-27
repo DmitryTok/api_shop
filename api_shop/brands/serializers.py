@@ -10,11 +10,11 @@ class BrandSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
 
-       if not validated_data.get("slug"):
+      if not validated_data.get("slug"):
                  validated_data["slug"] = generate_unique_slug(
                   Brand,
                  validated_data["name"]
               )
 
-       return super().create(validated_data)
+      return super().create(validated_data)
 
