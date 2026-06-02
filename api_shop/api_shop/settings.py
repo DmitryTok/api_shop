@@ -68,7 +68,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'debug_toolbar.middleware.DebugToolbarMiddleware',
 ]
 
 ROOT_URLCONF = 'api_shop.urls'
@@ -226,11 +225,9 @@ PASSWORD_RESET_TIMEOUT = (
 )
 REFRESH_TOKEN_TIMEOUT = int(os.getenv("REFRESH_TOKEN_TIMEOUT", 24)) * 60 * 60
 
-if not DEBUG:
-    if 'debug_toolbar' in INSTALLED_APPS:
-        INSTALLED_APPS.remove('debug_toolbar')
-    if 'debug_toolbar.middleware.DebugToolbarMiddleware' in MIDDLEWARE:
-        MIDDLEWARE.remove('debug_toolbar.middleware.DebugToolbarMiddleware')
+if DEBUG:
+    INSTALLED_APPS.append('debug_toolbar')
+    MIDDLEWARE.insert(3, 'debug_toolbar.middleware.DebugToolbarMiddleware')
 
     DEBUG_TOOLBAR_CONFIG = {
         'SHOW_TOOLBAR_CALLBACK': lambda request: False,
