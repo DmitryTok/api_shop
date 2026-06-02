@@ -3,36 +3,22 @@ import os
 from django.conf import settings
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
-from django.urls import reverse
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 
+FRONTEND_URL = os.getenv("ACTIVATION_LINK", "http://localhost:3000")
 
-def generate_activation_link(user, request):
+
+def generate_uid_token(user):
     uid = urlsafe_base64_encode(force_bytes(user.pk))
     token = default_token_generator.make_token(user)
-    activation_path = reverse(
-        "activate-user", kwargs={"uidb64": uid, "token": token}
-    )
-    return request.build_absolute_uri(activation_path)
-
-
-def generate_password_reset_link(user, request):
-    uid = urlsafe_base64_encode(force_bytes(user.pk))
-    token = default_token_generator.make_token(user)
-    reset_path = reverse(
-        "password_reset_confirm", kwargs={"uidb64": uid, "token": token}
-    )
-    return request.build_absolute_uri(reset_path)
+    return uid, token
 
 
 def send_activation_email(user, request):
-    frontend_url = os.getenv("ACTIVATION_LINK", "http://localhost:3000")
+    uid, token = generate_uid_token(user)
 
-    uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
-    token = default_token_generator.make_token(user)
-
-    activation_link = f"{frontend_url.rstrip('/')}/activate/{uidb64}/{token}/"
+    activation_link = f"{FRONTEND_URL.rstrip('/')}/activate/{uid}/{token}/"
 
     subject = "Activate your account"
     message = (
@@ -46,9 +32,16 @@ def send_activation_email(user, request):
 
 
 def send_password_reset_email(user, request):
-    link = generate_password_reset_link(user, request)
+    uid, token = generate_uid_token(user)
+    reset_link = (
+        f"{FRONTEND_URL.rstrip('/')}/password-reset-confirm/{uid}/{token}/"
+    )
+
     subject = "Change password request"
-    message = f"Hello {user.email}, click here to change your password: {link}"
+    message = (
+        f"Hello {user.email}, click here to change your password: {reset_link}"
+    )
+
     return send_mail(
         subject, message, settings.DEFAULT_FROM_EMAIL, [user.email]
     )
