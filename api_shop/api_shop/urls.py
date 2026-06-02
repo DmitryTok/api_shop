@@ -24,7 +24,6 @@ urlpatterns = [
         name='token_refresh',
     ),
     path('api/categories/', include('categories.urls')),
-    path('__debug__/', include('debug_toolbar.urls')),
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     path(
         'api/schema/redoc/',
@@ -37,6 +36,13 @@ urlpatterns = [
         name='swagger-ui',
     ),
 ]
+
+if settings.DEBUG:
+    import debug_toolbar
+
+    urlpatterns += [
+        path('__debug__/', include(debug_toolbar.urls)),
+    ]
 
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
