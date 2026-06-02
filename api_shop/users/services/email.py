@@ -1,3 +1,5 @@
+import os
+
 from django.conf import settings
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
@@ -25,11 +27,19 @@ def generate_password_reset_link(user, request):
 
 
 def send_activation_email(user, request):
-    link = generate_activation_link(user, request)
+    frontend_url = os.getenv("ACTIVATION_LINK", "http://localhost:3000")
+
+    uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
+    token = default_token_generator.make_token(user)
+
+    activation_link = f"{frontend_url.rstrip('/')}/activate/{uidb64}/{token}/"
+
     subject = "Activate your account"
     message = (
-        f"Hello {user.email}, click here to activate your account: {link}"
+        f"Hello {user.email},\n\n"
+        f"Click here to activate your account: {activation_link}"
     )
+
     return send_mail(
         subject, message, settings.DEFAULT_FROM_EMAIL, [user.email]
     )
