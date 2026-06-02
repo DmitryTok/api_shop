@@ -4,6 +4,7 @@ from .models import Brand
 from addons.slugify import generate_slug
 
 class BrandSerializer(serializers.ModelSerializer):
+    slug = serializers.CharField(required=False)
     class Meta:
         model = Brand
         fields = "__all__"
