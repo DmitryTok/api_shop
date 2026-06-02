@@ -18,4 +18,4 @@ RUN pip install --upgrade pip && pip install -r requirements.txt --no-cache-dir
 
 COPY . .
 
-CMD ["sh", "-c", "python api_shop/manage.py migrate && gunicorn --bind 0.0.0.0:$PORT api_shop.wsgi:application"]
+CMD ["sh", "-c", "python api_shop/manage.py migrate && python api_shop/manage.py runserver 0.0.0.0:8000"]
