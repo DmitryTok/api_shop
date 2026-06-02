@@ -13,4 +13,4 @@ python api_shop/manage.py create_default_superuser || echo "ADMIN User already e
 
 echo "--> Start Uvicorn..."
 
-exec /opt/venv/bin/gunicorn --bind 0.0.0.0:$PORT --workers 3 --worker-class uvicorn.workers.UvicornWorker --chdir /app/api_shop api_shop.asgi:application
+exec /opt/venv/bin/gunicorn --bind 0.0.0.0:$PORT --workers 3 --chdir /app/api_shop api_shop.wsgi:application

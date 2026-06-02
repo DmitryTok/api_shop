@@ -2,7 +2,7 @@ import os
 from datetime import timedelta
 from pathlib import Path
 
-from addons.utils import getenv_bool, getenv_int
+from addons.utils import getenv_int
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -10,7 +10,7 @@ load_dotenv(BASE_DIR / ".env")
 
 SECRET_KEY = os.getenv('SECRET')
 
-DEBUG = getenv_bool('DEBUG', False)
+DEBUG = True
 
 RENDER_EXTERNAL_HOSTNAME = os.getenv('RENDER_HOST')
 
@@ -173,9 +173,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 EMAIL_BACKEND = "anymail.backends.brevo.EmailBackend"
 
-ANYMAIL = {
-    "BREVO_API_KEY": os.getenv("BREVO_API_KEY"),
-}
+ANYMAIL = {"BREVO_API_KEY": os.getenv("BREVO_API_KEY"), "REQUESTS_TIMEOUT": 10}
 
 
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL')
