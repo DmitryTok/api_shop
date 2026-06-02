@@ -11,6 +11,6 @@ python api_shop/manage.py migrate
 echo "--> Create ADMIN User"
 python api_shop/manage.py create_default_superuser || echo "ADMIN User already exists"
 
-echo "--> Start Gunicorn..."
+echo "--> Start Uvicorn..."
 
-exec /opt/venv/bin/gunicorn --bind 0.0.0.0:$PORT --chdir /app/api_shop api_shop.wsgi:application
+exec /opt/venv/bin/gunicorn --bind 0.0.0.0:$PORT --workers 3 --worker-class uvicorn.workers.UvicornWorker --chdir /app/api_shop api_shop.asgi:application
