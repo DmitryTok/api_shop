@@ -18,4 +18,6 @@ RUN pip install --upgrade pip && pip install -r requirements.txt --no-cache-dir
 
 COPY . .
 
-CMD ["sh", "-c", "python api_shop/manage.py collectstatic --no-input && python api_shop/manage.py migrate && /opt/venv/bin/gunicorn --bind 0.0.0.0:$PORT --chdir /app api_shop.wsgi:application"]
+RUN chmod +x entrypoint.sh
+
+ENTRYPOINT ["/app/entrypoint.sh"]
