@@ -177,16 +177,7 @@ EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 SERVER_EMAIL = EMAIL_HOST_USER
 
-EMAIL_USE_TLS = getenv_bool("EMAIL_USE_TLS")
-EMAIL_USE_SSL = getenv_bool("EMAIL_USE_SSL")
-
 ALGORITHM = os.getenv('ALGORITHM')
-
-DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "kinoshort@support.com")
-
-ALGORITHM = os.getenv('ALGORITHM')
-
-DEFAULT_FROM_EMAIL = "shop@support.com"
 
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
