@@ -10,7 +10,7 @@ load_dotenv(BASE_DIR / ".env")
 
 SECRET_KEY = os.getenv('SECRET')
 
-DEBUG = getenv_bool('DEBUG')
+DEBUG = getenv_bool('DEBUG', False)
 
 RENDER_EXTERNAL_HOSTNAME = os.getenv('RENDER_HOST')
 
@@ -53,7 +53,6 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'drf_spectacular',
-    'debug_toolbar',
     'users',
     'profiles',
     'categories',
