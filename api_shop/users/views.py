@@ -1,9 +1,8 @@
+import threading
+
 from django.contrib.auth import get_user_model
-from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.core.cache import cache
 from django.shortcuts import get_object_or_404
-from django.utils.encoding import force_str
-from django.utils.http import urlsafe_base64_decode
 from profiles.models import Profile
 from profiles.serializers import ProfileSerializer
 from rest_framework import status
@@ -21,19 +20,12 @@ from users.serializers import (
     PasswordChangeSerializer,
     PasswordResetConfirmSerializer,
     PasswordResetRequestSerializer,
+    ResendActivationCodeSerializer,
     UserRegisterSerializer
 )
-from users.services.email import (
-    send_activation_email,
-    send_password_reset_email
-)
+from users.services.email import send_email_code
 
-from api_shop.settings import (
-    MAX_PASSWORD_RESET_ATTEMPTS,
-    MAX_REFRESH_ATTEMPTS,
-    PASSWORD_RESET_TIMEOUT,
-    REFRESH_TOKEN_TIMEOUT
-)
+from api_shop.settings import MAX_REFRESH_ATTEMPTS, REFRESH_TOKEN_TIMEOUT
 
 User = get_user_model()
 
@@ -97,9 +89,13 @@ class RegistrationView(APIView):
     def post(self, request, *args, **kwargs):
         serializer = UserRegisterSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-
         new_user = serializer.save()
-        send_activation_email(new_user, self.request)
+
+        email_thread = threading.Thread(
+            target=send_email_code, args=(new_user, "activation", request)
+        )
+
+        email_thread.start()
 
         return Response(
             "Activation email has been sended", status=status.HTTP_201_CREATED
@@ -160,6 +156,45 @@ class ActivateUserView(APIView):
         )
 
 
+class ResendActivationCodeView(APIView):
+    serializer_class = ResendActivationCodeSerializer
+    permission_classes = [AllowAny]
+    throttle_classes = [AnonRateThrottle]
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        try:
+            user = User.objects.get(
+                email=serializer.validated_data['email'].lower().strip()
+            )
+        except User.DoesNotExist:
+            return Response(
+                {
+                    "detail": "If the account exists, a new activation code has been sent."
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        if user.is_active:
+            return Response(
+                {"error": "This account is already activated."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        email_thread = threading.Thread(
+            target=send_email_code, args=(user, "activation", request)
+        )
+
+        email_thread.start()
+
+        return Response(
+            {"detail": "A new activation code has been sent to your email."},
+            status=status.HTTP_200_OK,
+        )
+
+
 class CustomTokenObtainPairView(APIView):
     serializer_class = CustomTokenObtainPairSerializer
     permission_classes = [AllowAny]
@@ -171,120 +206,68 @@ class CustomTokenObtainPairView(APIView):
 
 
 class PasswordResetRequestView(APIView):
-    permission_classes = [AllowAny]
     serializer_class = PasswordResetRequestSerializer
+    permission_classes = [AllowAny]
+    throttle_classes = [AnonRateThrottle]
 
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
 
-        if serializer.is_valid():
-
-            user = get_object_or_404(
-                User, email=serializer.validated_data["email"]
+        try:
+            user = User.objects.get(
+                email=serializer.validated_data['email'].lower().strip()
+            )
+        except User.DoesNotExist:
+            return Response(
+                {
+                    "detail": "If the account exists, a password reset code has been sent."
+                },
+                status=status.HTTP_200_OK,
             )
 
-            if not user.is_active:
-                return Response(
-                    {"detail": "User account is not active"},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
+        if not user.is_active:
+            return Response(
+                {"error": "This account is not activated."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
-            password_reset_key = f"password_resets_{user.email}"
-            password_reset_attempts = cache.get(password_reset_key, 0)
+        email_thread = threading.Thread(
+            target=send_email_code, args=(user, "password_reset", request)
+        )
 
-            if password_reset_attempts >= MAX_PASSWORD_RESET_ATTEMPTS:
-                return Response(
-                    {
-                        "message": f"You can reset your password only {MAX_PASSWORD_RESET_ATTEMPTS} times per 24 hours"
-                    },
-                    status=status.HTTP_429_TOO_MANY_REQUESTS,
-                )
-            else:
-                result = send_password_reset_email(user, request)
-                if result:
-                    return Response(
-                        {"detail": "Email was sent successfully"},
-                        status=status.HTTP_200_OK,
-                    )
-                else:
-                    return Response(
-                        {
-                            "detail": "Email service is temporarily unavailable. Please try again later."
-                        },
-                        status=status.HTTP_503_SERVICE_UNAVAILABLE,
-                    )
+        email_thread.start()
 
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(
+            {"detail": "Password reset code has been sent to your email."},
+            status=status.HTTP_200_OK,
+        )
 
 
 class PasswordResetConfirmView(APIView):
     permission_classes = [AllowAny]
     serializer_class = PasswordResetConfirmSerializer
+    throttle_classes = [AnonRateThrottle]
 
     def post(self, request, *args, **kwargs):
-        uidb64 = kwargs.get("uidb64")
-        token = kwargs.get("token")
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
 
-        try:
-            uid = force_str(urlsafe_base64_decode(uidb64))
-            user = get_object_or_404(User, pk=uid)
+        user = serializer.validated_data['user']
+        redis_key = serializer.validated_data['redis_key']
+        new_password = serializer.validated_data['new_password']
 
-        except UnicodeDecodeError:
-            return Response(
-                {"detail": "Invalid uidb64."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        user.set_password(new_password)
+        user.save()
 
-        token_generator = PasswordResetTokenGenerator()
-
-        if user and token_generator.check_token(user, token):
-            serializer = self.serializer_class(data=request.data, user=user)
-            if serializer.is_valid():
-                serializer.save()
-
-                password_reset_key = f"password_resets_{user.email}"
-                block_key = f"password_reset_block_{user.email}"
-
-                if cache.get(block_key):
-                    return Response(
-                        {
-                            "detail": "Password reset limit reached. Try again after 24 hours."
-                        },
-                        status=status.HTTP_429_TOO_MANY_REQUESTS,
-                    )
-
-                password_reset_attempts = cache.get(password_reset_key)
-
-                if password_reset_attempts is None:
-                    password_reset_attempts = 1
-                    cache.set(
-                        password_reset_key,
-                        password_reset_attempts,
-                        timeout=PASSWORD_RESET_TIMEOUT,
-                    )
-                else:
-                    cache.incr(password_reset_key)
-                    password_reset_attempts += 1
-
-                if password_reset_attempts > MAX_PASSWORD_RESET_ATTEMPTS:
-                    cache.set(block_key, True, timeout=PASSWORD_RESET_TIMEOUT)
-                    return Response(
-                        {
-                            "detail": "You have reached the limit of 3 password resets per day."
-                        },
-                        status=status.HTTP_429_TOO_MANY_REQUESTS,
-                    )
-
-                return Response(
-                    {"detail": "Password has been reset."},
-                    status=status.HTTP_200_OK,
-                )
-            return Response(
-                serializer.errors, status=status.HTTP_400_BAD_REQUEST
-            )
+        cache.delete(redis_key)
+        cache.delete(f"user:{user.id}:password_reset_code")
 
         return Response(
-            {"detail": "Invalid token."}, status=status.HTTP_400_BAD_REQUEST
+            {
+                "detail": "Password has been successfully reset. You can now log in with your new password."
+            },
+            status=status.HTTP_200_OK,
         )
 
 

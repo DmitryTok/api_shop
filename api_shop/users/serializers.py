@@ -1,9 +1,9 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
+from django.core.cache import cache
 from django.db import transaction
 from django.db.models import Q
 from rest_framework import serializers
-from rest_framework.generics import get_object_or_404
 from rest_framework_simplejwt.exceptions import InvalidToken
 from rest_framework_simplejwt.serializers import TokenRefreshSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -140,6 +140,10 @@ class ActivationCodeSerializer(serializers.Serializer):
     )
 
 
+class ResendActivationCodeSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=True)
+
+
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
@@ -148,14 +152,11 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class PasswordResetRequestSerializer(serializers.Serializer):
-    email = serializers.EmailField()
-
-    def validate_email(self, value):
-        get_object_or_404(User, email=value)
-        return value
+    email = serializers.EmailField(required=True)
 
 
 class PasswordResetConfirmSerializer(serializers.Serializer):
+    code = serializers.CharField(max_length=6, min_length=6, write_only=True)
     new_password = serializers.CharField(
         required=True, validators=[validate_password]
     )
@@ -168,14 +169,28 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
         super().__init__(*args, **kwargs)
 
     def validate(self, attrs):
-        new_password = attrs["new_password"]
-        confirm_password = attrs["confirm_password"]
-
-        if new_password != confirm_password:
+        if attrs['new_password'] != attrs['confirm_password']:
             raise serializers.ValidationError(
-                {"confirm_password": "Password fields didn't match."}
+                {"password_confirm": "Passwords do not match."}
             )
 
+        code = attrs['code']
+
+        redis_key = f"password_reset:{code}:user_id"
+        user_id = cache.get(redis_key)
+
+        if not user_id:
+            raise serializers.ValidationError(
+                {"code": "Invalid or expired reset code."}
+            )
+
+        try:
+            user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            raise serializers.ValidationError({"code": "User not found."})
+
+        attrs['user'] = user
+        attrs['redis_key'] = redis_key
         return attrs
 
     def save(self):
