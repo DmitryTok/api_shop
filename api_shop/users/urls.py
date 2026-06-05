@@ -11,7 +11,7 @@ from users.views import (
 urlpatterns = [
     path("register/", RegistrationView.as_view(), name="register"),
     path(
-        "activate/<uidb64>/<token>/",
+        "activate/",
         ActivateUserView.as_view(),
         name="activate-user",
     ),

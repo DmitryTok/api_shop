@@ -1,8 +1,5 @@
 from django.contrib.auth import get_user_model
-from django.contrib.auth.tokens import (
-    PasswordResetTokenGenerator,
-    default_token_generator
-)
+from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.core.cache import cache
 from django.shortcuts import get_object_or_404
 from django.utils.encoding import force_str
@@ -12,11 +9,13 @@ from profiles.serializers import ProfileSerializer
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.throttling import AnonRateThrottle
 from rest_framework.views import APIView
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenRefreshView
 from users.serializers import (
+    ActivationCodeSerializer,
     CustomTokenObtainPairSerializer,
     CustomTokenRefreshSerializer,
     PasswordChangeSerializer,
@@ -108,6 +107,7 @@ class RegistrationView(APIView):
 
 
 class CurrentUserView(APIView):
+    serializer_class = ProfileSerializer
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
@@ -117,33 +117,46 @@ class CurrentUserView(APIView):
 
 
 class ActivateUserView(APIView):
-    serializer_class = None
+    serializer_class = ActivationCodeSerializer
     permission_classes = [AllowAny]
+    throttle_classes = [AnonRateThrottle]
 
-    def patch(self, request, uidb64, token):
-        try:
-            uid = urlsafe_base64_decode(uidb64).decode()
-            user = get_object_or_404(User, pk=uid)
-        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+    def patch(self, request):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        code = serializer.validated_data['code'].strip()
+
+        user_id = cache.get(f"activation:{code}:user_id")
+
+        if user_id is None:
             return Response(
-                {"error": "Invalid link"}, status=status.HTTP_400_BAD_REQUEST
+                {"error": "Invalid or expired activation code."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            user = User.objects.get(pk=user_id)
+        except User.DoesNotExist:
+            return Response(
+                {"error": "Not found."},
+                status=status.HTTP_404_NOT_FOUND,
             )
 
         if user.is_active:
             return Response(
-                {"error": "Account already activated"},
+                {"error": "User account is already activated."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        if default_token_generator.check_token(user, token):
-            user.is_active = True
-            user.save()
-            return Response(
-                {"success": "Account activated successfully"},
-                status=status.HTTP_200_OK,
-            )
+        user.is_active = True
+        user.save()
+
+        cache.delete(f"activation:{code}:user_id")
+
         return Response(
-            {"error": "Invalid token"}, status=status.HTTP_400_BAD_REQUEST
+            {"detail": "Your account has been successfully activated!"},
+            status=status.HTTP_200_OK,
         )
 
 
@@ -169,6 +182,12 @@ class PasswordResetRequestView(APIView):
             user = get_object_or_404(
                 User, email=serializer.validated_data["email"]
             )
+
+            if not user.is_active:
+                return Response(
+                    {"detail": "User account is not active"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
             password_reset_key = f"password_resets_{user.email}"
             password_reset_attempts = cache.get(password_reset_key, 0)

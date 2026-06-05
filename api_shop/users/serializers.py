@@ -134,6 +134,12 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         return user
 
 
+class ActivationCodeSerializer(serializers.Serializer):
+    code = serializers.CharField(
+        required=True, max_length=6, min_length=6, help_text="Activation code"
+    )
+
+
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
