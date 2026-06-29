@@ -23,34 +23,24 @@ class Command(BaseCommand):
     help = "Load initial brands"
 
     def handle(self, *args, **options):
+        self.stdout.write(self.style.SUCCESS("Command started"))
+
+        brands_to_create = [
+            Brand(
+                name=brand_name,
+                slug=generate_unique_slug(Brand, brand_name),
+            )
+            for brand_name in BRANDS
+        ]
+
         with transaction.atomic():
-            self.stdout.write(
-                self.style.SUCCESS("Command started")
+            Brand.objects.bulk_create(
+                brands_to_create,
+                update_conflicts=True,
+                update_fields=["slug"],
+                unique_fields=["name"],
             )
 
-            existing_brands = {
-                brand.name: brand
-                for brand in Brand.objects.all()
-            }
-
-            brands_to_create = []
-
-            for brand_name in BRANDS:
-                if brand_name not in existing_brands:
-                    brands_to_create.append(
-                        Brand(
-                            name=brand_name,
-                            slug=generate_unique_slug(
-                                Brand,
-                                brand_name,
-                            ),
-                        )
-                    )
-
-            Brand.objects.bulk_create(brands_to_create)
-
-            self.stdout.write(
-                self.style.SUCCESS(
-                    "Brands loaded successfully"
-                )
-            )
+        self.stdout.write(
+            self.style.SUCCESS("Brands loaded successfully")
+        )
