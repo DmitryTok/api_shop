@@ -23,10 +23,13 @@ services:
     command: >
       bash -c "
       python api_shop/manage.py migrate &&
+      python api_shop/manage.py load_brands &&
+      python api_shop/manage.py load_category &&
+      python api_shop/manage.py load_terms &&
+      python api_shop/manage.py create_default_superuser &&
       python api_shop/manage.py runserver 0.0.0.0:8000
       "
-  
-    
+
     volumes:
       - .:/app
       - static_value:/static/
@@ -45,7 +48,6 @@ services:
     image: redis:7-alpine
     ports:
       - "6379:6379"
-
 
 volumes:
   static_value:

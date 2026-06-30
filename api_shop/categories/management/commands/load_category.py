@@ -1,9 +1,7 @@
-from django.core.management.base import BaseCommand
-from django.db import transaction
-
 from addons.slugify import generate_unique_slug
 from categories.models import Category, Subcategory
-
+from django.core.management.base import BaseCommand
+from django.db import transaction
 
 CATEGORIES = {
     "Clothing": [
@@ -69,9 +67,7 @@ class Command(BaseCommand):
 
         categories = {
             category.name: category
-            for category in Category.objects.filter(
-                name__in=CATEGORIES.keys()
-            )
+            for category in Category.objects.filter(name__in=CATEGORIES.keys())
         }
 
         subcategories_to_create = [

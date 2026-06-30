@@ -8,6 +8,15 @@ python api_shop/manage.py collectstatic --no-input
 echo "--> Create DB Tables..."
 python api_shop/manage.py migrate
 
+echo "--> Load Brands"
+python api_shop/manage.py load_brands
+
+echo "--> Load Categories"
+python api_shop/manage.py load_category
+
+echo "--> Load Terms"
+python api_shop/manage.py load_terms
+
 echo "--> Create ADMIN User"
 python api_shop/manage.py create_default_superuser || echo "ADMIN User already exists"
 
