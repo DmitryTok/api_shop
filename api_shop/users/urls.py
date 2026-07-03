@@ -2,6 +2,7 @@ from django.urls import path
 from users.views import (
     ActivateUserView,
     CurrentUserView,
+    GoogleAuthView,
     PasswordChangeView,
     PasswordResetConfirmView,
     PasswordResetRequestView,
@@ -10,6 +11,7 @@ from users.views import (
 )
 
 urlpatterns = [
+    path('auth/google/', GoogleAuthView.as_view(), name='google-auth'),
     path("register/", RegistrationView.as_view(), name="register"),
     path(
         "activate/",

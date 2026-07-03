@@ -1,8 +1,12 @@
+import os
+
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from django.core.cache import cache
 from django.db import transaction
 from django.db.models import Q
+from google.auth.transport import requests
+from google.oauth2 import id_token
 from rest_framework import serializers
 from rest_framework_simplejwt.exceptions import InvalidToken
 from rest_framework_simplejwt.serializers import TokenRefreshSerializer
@@ -10,6 +14,74 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from users.models import Term, UserTermsAcceptance
 
 User = get_user_model()
+
+
+class GoogleAuthSerializer(serializers.Serializer):
+    token = serializers.CharField(required=True)
+    accept_terms = serializers.BooleanField(write_only=True, required=True)
+
+    def validate_token(self, token):
+        try:
+            id_info = id_token.verify_oauth2_token(
+                token, requests.Request(), os.getenv('GOOGLE_CLIENT_ID')
+            )
+
+            if id_info['iss'] not in [
+                'accounts.google.com',
+                'https://accounts.google.com',
+            ]:
+                raise serializers.ValidationError('Wrong issuer.')
+
+            return id_info
+        except Exception as e:
+            raise serializers.ValidationError(
+                f'Invalid Google token: {str(e)}'
+            )
+
+    def validate_accept_terms(self, value):
+        if value is not True:
+            raise serializers.ValidationError(
+                "You must accept the user agreement."
+            )
+        return value
+
+    def create(self, validated_data):
+        id_info = validated_data.pop("token")
+        email = id_info.get("email").lower()
+
+        if not email:
+            raise serializers.ValidationError(
+                {"detail": "Email not provided by Google."}
+            )
+
+        with transaction.atomic():
+            user, created = User.objects.get_or_create(
+                email=email,
+                defaults={"is_active": True},
+            )
+
+            if not user.is_active:
+                raise serializers.ValidationError(
+                    {"detail": "User account is disabled."}
+                )
+
+            try:
+                terms = Term.objects.filter(is_active=True).latest(
+                    "created_at"
+                )
+
+                UserTermsAcceptance.objects.get_or_create(
+                    user=user, terms=terms
+                )
+            except Term.DoesNotExist:
+                pass
+
+        refresh = RefreshToken.for_user(user)
+
+        return {
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+        }
 
 
 class CustomTokenRefreshSerializer(TokenRefreshSerializer):
@@ -58,6 +130,7 @@ class CustomTokenObtainPairSerializer(serializers.Serializer):
             )
 
         refresh = RefreshToken.for_user(user_obj)
+
         return {
             "refresh": str(refresh),
             "access": str(refresh.access_token),

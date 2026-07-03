@@ -17,6 +17,7 @@ from users.serializers import (
     ActivationCodeSerializer,
     CustomTokenObtainPairSerializer,
     CustomTokenRefreshSerializer,
+    GoogleAuthSerializer,
     PasswordChangeSerializer,
     PasswordResetConfirmSerializer,
     PasswordResetRequestSerializer,
@@ -28,6 +29,18 @@ from users.services.email import send_email_code
 from api_shop.settings import MAX_REFRESH_ATTEMPTS, REFRESH_TOKEN_TIMEOUT
 
 User = get_user_model()
+
+
+class GoogleAuthView(APIView):
+    permission_classes = [AllowAny]
+    serializer_class = GoogleAuthSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        tokens = serializer.save()
+
+        return Response(tokens, status=status.HTTP_200_OK)
 
 
 class CustomTokenRefreshView(TokenRefreshView):

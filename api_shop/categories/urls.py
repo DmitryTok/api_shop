@@ -1,9 +1,5 @@
+from categories.views import CategoryViewSet, SubcategoryViewSet
 from rest_framework.routers import DefaultRouter
-
-from categories.views import (
-    CategoryViewSet,
-    SubcategoryViewSet,
-)
 
 router = DefaultRouter()
 
