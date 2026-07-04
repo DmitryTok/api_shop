@@ -47,8 +47,6 @@ if RENDER_EXTERNAL_HOSTNAME:
 APPEND_SLASH = True
 
 
-
-
 INSTALLED_APPS = [
     'jazzmin',
     'django.contrib.admin',
@@ -167,6 +165,7 @@ REST_FRAMEWORK = {
         'rest_framework.throttling.AnonRateThrottle',
     ],
     'DEFAULT_THROTTLE_RATES': {
+        'refresh_limit': '10/minute',
         'anon': '5/minute',
     },
 }
