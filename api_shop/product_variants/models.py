@@ -5,6 +5,11 @@ from products.models import Product
 from sizes.models import Size
 from colors.models import Color
 
+class Gender(models.TextChoices):
+    MALE = "male", "Male"
+    FEMALE = "female", "Female"
+    UNISEX = "unisex", "Unisex"
+
 
 class ProductVariant(TimeStampMixin):
     product = models.ForeignKey(
@@ -35,7 +40,9 @@ class ProductVariant(TimeStampMixin):
     )
 
     gender = models.CharField(
-        max_length=20,
+        max_length=10,
+        choices=Gender.choices,
+        default=Gender.UNISEX,
     )
 
     is_active = models.BooleanField(
@@ -49,3 +56,11 @@ class ProductVariant(TimeStampMixin):
         verbose_name = "Product Variant"
         verbose_name_plural = "Product Variants"
         ordering = ["-created_at"]
+
+        indexes = [
+            models.Index(fields=["product"]),
+            models.Index(fields=["size"]),
+            models.Index(fields=["color"]),
+            models.Index(fields=["gender"]),
+            models.Index(fields=["is_active"]),
+        ]

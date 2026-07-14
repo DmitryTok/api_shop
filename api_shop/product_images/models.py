@@ -11,7 +11,9 @@ class ProductImage(TimeStampMixin):
         related_name="images",
     )
 
-    image_url = models.URLField()
+    image = models.ImageField(
+        upload_to="products/",
+    )
 
     is_main = models.BooleanField(
         default=False,

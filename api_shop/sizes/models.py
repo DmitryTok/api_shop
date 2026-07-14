@@ -1,15 +1,13 @@
 from django.db import models
 
 from addons.mixins import TimeStampMixin
+class Type(models.TextChoices):
+    CLOTHING = "clothing", "Clothing"
+    SHOES = "shoes", "Shoes"
+    ACCESSORIES = "accessories", "Accessories"
 
 
 class Size(TimeStampMixin):
-
-    class Type(models.TextChoices):
-        CLOTHING = "clothing", "Clothing"
-        SHOES = "shoes", "Shoes"
-        ACCESSORIES = "accessories", "Accessories"
-
     name = models.CharField(
         max_length=20,
         unique=True,
