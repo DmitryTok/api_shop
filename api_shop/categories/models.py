@@ -42,3 +42,7 @@ class Subcategory(TimeStampMixin):
         verbose_name = "Subcategory"
         verbose_name_plural = "Subcategories"
         ordering = ["-created_at"]
+
+        indexes = [
+        models.Index(fields=["category"]),
+    ]
