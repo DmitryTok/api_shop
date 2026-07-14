@@ -13,7 +13,7 @@ class Discount(TimeStampMixin):
 
     discount_type = models.CharField(max_length=20)
 
-    value = models.DecimalField(
+    amount = models.DecimalField(
         max_digits=10,
         decimal_places=2,
     )
@@ -25,11 +25,19 @@ class Discount(TimeStampMixin):
     is_active = models.BooleanField(default=True)
 
     def __str__(self):
-        return f"{self.discount_type} - {self.value}"
+        return f"{self.discount_type} - {self.amount}"
 
     class Meta:
         verbose_name = "Discount"
         verbose_name_plural = "Discounts"
         ordering = ["-created_at"]
+
+        indexes = [
+            models.Index(fields=["product_variant"]),
+            models.Index(fields=["discount_type"]),
+            models.Index(fields=["start_at"]),
+            models.Index(fields=["end_at"]),
+            models.Index(fields=["is_active"]),
+        ]
 
 
