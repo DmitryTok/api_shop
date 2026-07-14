@@ -25,3 +25,7 @@ class Currency(TimeStampMixin):
         verbose_name = "Currency"
         verbose_name_plural = "Currencies"
         ordering = ["-created_at"]
+
+        indexes = [
+             models.Index(fields=["amount"]),
+        ]

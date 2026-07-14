@@ -33,11 +33,8 @@ class Discount(TimeStampMixin):
         ordering = ["-created_at"]
 
         indexes = [
-            models.Index(fields=["product_variant"]),
-            models.Index(fields=["discount_type"]),
             models.Index(fields=["start_at"]),
             models.Index(fields=["end_at"]),
-            models.Index(fields=["is_active"]),
         ]
 
 

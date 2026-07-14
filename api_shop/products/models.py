@@ -9,6 +9,10 @@ class Product(TimeStampMixin):
     name = models.CharField(max_length=255, unique=True)
     slug = models.SlugField(unique=True)
 
+    description = models.TextField(
+        default="",
+        blank=True,
+    )
     brand = models.ForeignKey(
         Brand,
         on_delete=models.CASCADE,
@@ -32,4 +36,10 @@ class Product(TimeStampMixin):
         verbose_name_plural = "Products"
         ordering = ["-created_at"]
 
-# Create your models here.
+
+        indexes = [
+            models.Index(fields=["subcategory"]),
+            models.Index(fields=["brand", "subcategory"]),
+        ]
+
+
