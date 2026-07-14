@@ -1,7 +1,9 @@
 from django.db import models
 
 from addons.mixins import TimeStampMixin
-class Type(models.TextChoices):
+
+
+class Kind(models.TextChoices):
     CLOTHING = "clothing", "Clothing"
     SHOES = "shoes", "Shoes"
     ACCESSORIES = "accessories", "Accessories"
@@ -15,7 +17,7 @@ class Size(TimeStampMixin):
 
     size_type = models.CharField(
         max_length=20,
-        choices=Type.choices,
+        choices=Kind.choices,
     )
 
     sort_order = models.PositiveIntegerField(

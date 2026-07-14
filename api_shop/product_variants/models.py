@@ -28,7 +28,7 @@ class ProductVariant(TimeStampMixin):
        Color,
        on_delete=models.CASCADE,
        related_name="product_variants",
-   )
+    )
 
     sku = models.CharField(
         max_length=100,
@@ -58,9 +58,6 @@ class ProductVariant(TimeStampMixin):
         ordering = ["-created_at"]
 
         indexes = [
-            models.Index(fields=["product"]),
-            models.Index(fields=["size"]),
-            models.Index(fields=["color"]),
-            models.Index(fields=["gender"]),
-            models.Index(fields=["is_active"]),
+            models.Index(fields=["product", "size"]),
+            models.Index(fields=["product", "gender"]),
         ]

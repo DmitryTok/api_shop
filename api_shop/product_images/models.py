@@ -31,4 +31,8 @@ class ProductImage(TimeStampMixin):
         verbose_name_plural = "Product Images"
         ordering = ["sort_order", "id"]
 
+        indexes = [
+            models.Index(fields=["product_variant"]),
+        ]
+
 
