@@ -10,7 +10,7 @@ class Product(TimeStampMixin):
     slug = models.SlugField(unique=True)
 
     description = models.TextField(
-        default="",
+        max_length=500,
         blank=True,
     )
     brand = models.ForeignKey(
