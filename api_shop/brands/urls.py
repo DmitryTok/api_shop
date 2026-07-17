@@ -1,8 +1,17 @@
 from django.urls import path
 
-from .views import BrandAPIView
+from .views import BrandListAPIView, BrandRetrieveAPIView
 
 
 urlpatterns = [
-    path("", BrandAPIView.as_view(), name="brands"),
+    path(
+        "",
+        BrandListAPIView.as_view(),
+        name="brand-list",
+    ),
+    path(
+        "<int:pk>/",
+        BrandRetrieveAPIView.as_view(),
+        name="brand-detail",
+    ),
 ]

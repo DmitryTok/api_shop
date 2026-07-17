@@ -1,5 +1,4 @@
-from rest_framework.views import APIView
-from rest_framework.response import Response
+from rest_framework.generics import ListAPIView, RetrieveAPIView
 
 from categories.models import Category, Subcategory
 from categories.serializers import (
@@ -8,18 +7,21 @@ from categories.serializers import (
 )
 
 
-class CategoryAPIView(APIView):
-
-    def get(self, request):
-        categories = Category.objects.all()
-        serializer = CategorySerializer(categories, many=True)
-        return Response(serializer.data)
+class CategoryListAPIView(ListAPIView):
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
 
 
-class SubcategoryAPIView(APIView):
+class CategoryRetrieveAPIView(RetrieveAPIView):
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
 
-    def get(self, request):
-        subcategories = Subcategory.objects.select_related("category")
-        serializer = SubcategorySerializer(subcategories, many=True)
-        return Response(serializer.data)
-    
+
+class SubcategoryListAPIView(ListAPIView):
+    queryset = Subcategory.objects.select_related("category")
+    serializer_class = SubcategorySerializer
+
+
+class SubcategoryRetrieveAPIView(RetrieveAPIView):
+    queryset = Subcategory.objects.select_related("category")
+    serializer_class = SubcategorySerializer
