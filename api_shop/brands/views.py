@@ -1,8 +1,13 @@
-from rest_framework.viewsets import ModelViewSet
-from .serializers import BrandSerializer
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
 from .models import Brand
+from .serializers import BrandSerializer
 
 
-class BrandViewSet(ModelViewSet):
-    queryset = Brand.objects.all()
-    serializer_class = BrandSerializer
+class BrandAPIView(APIView):
+
+    def get(self, request):
+        brands = Brand.objects.all()
+        serializer = BrandSerializer(brands, many=True)
+        return Response(serializer.data)
