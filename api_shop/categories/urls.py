@@ -1,9 +1,11 @@
-from categories.views import CategoryViewSet, SubcategoryViewSet
-from rest_framework.routers import DefaultRouter
+from django.urls import path
 
-router = DefaultRouter()
+from categories.views import (
+    CategoryAPIView,
+    SubcategoryAPIView,
+)
 
-router.register("categories", CategoryViewSet)
-router.register("subcategories", SubcategoryViewSet)
-
-urlpatterns = router.urls
+urlpatterns = [
+    path("categories/", CategoryAPIView.as_view(), name="categories"),
+    path("subcategories/", SubcategoryAPIView.as_view(), name="subcategories"),
+]
