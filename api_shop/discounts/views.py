@@ -5,10 +5,10 @@ from .serializers import DiscountSerializer
 
 
 class DiscountListAPIView(ListAPIView):
-    queryset = Discount.objects.all()
+    queryset = Discount.objects.select_related("product_variant").all()
     serializer_class = DiscountSerializer
 
 
 class DiscountRetrieveAPIView(RetrieveAPIView):
-    queryset = Discount.objects.all()
+    queryset = Discount.objects.select_related("product_variant").all()
     serializer_class = DiscountSerializer

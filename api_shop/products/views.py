@@ -5,11 +5,11 @@ from .serializers import ProductSerializer
 
 
 class ProductListAPIView(ListAPIView):
-    queryset = Product.objects.all()
+    queryset = Product.objects.select_related("brand", "subcategory").all()
     serializer_class = ProductSerializer
 
 
 class ProductRetrieveAPIView(RetrieveAPIView):
-    queryset = Product.objects.all()
+    queryset = Product.objects.select_related("brand", "subcategory").all()
     serializer_class = ProductSerializer
 

@@ -5,11 +5,11 @@ from .serializers import ProductImageSerializer
 
 
 class ProductImageListAPIView(ListAPIView):
-    queryset = ProductImage.objects.all()
+    queryset = ProductImage.objects.select_related("product_variant").all()
     serializer_class = ProductImageSerializer
 
 
 class ProductImageRetrieveAPIView(RetrieveAPIView):
-    queryset = ProductImage.objects.all()
+    queryset = ProductImage.objects.select_related("product_variant").all()
     serializer_class = ProductImageSerializer
 
