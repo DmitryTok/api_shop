@@ -5,12 +5,12 @@ from .serializers import CurrencySerializer
 
 
 class CurrencyListAPIView(ListAPIView):
-    queryset = Currency.objects.all()
+    queryset = Currency.objects.select_related("product_variant").all()
     serializer_class = CurrencySerializer
 
 
 class CurrencyRetrieveAPIView(RetrieveAPIView):
-    queryset = Currency.objects.all()
+    queryset = Currency.objects.select_related("product_variant").all()
     serializer_class = CurrencySerializer
 
 
