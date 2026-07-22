@@ -1,3 +1,33 @@
 from django.contrib import admin
 
-# Register your models here.
+from .models import ProductVariant
+
+
+@admin.register(ProductVariant)
+class ProductVariantAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "sku",
+        "product",
+        "size",
+        "color",
+        "gender",
+        "stock",
+        "is_active",
+    )
+    search_fields = (
+        "sku",
+        "product__name",
+    )
+    list_filter = (
+        "gender",
+        "is_active",
+        "size",
+        "color",
+    )
+    readonly_fields = ("created_at", "updated_at")
+    list_select_related = (
+        "product",
+        "size",
+        "color",
+    )
