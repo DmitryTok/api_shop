@@ -8,6 +8,9 @@ python api_shop/manage.py collectstatic --no-input
 echo "--> Create DB Tables..."
 python api_shop/manage.py migrate
 
+echo "--> Load Sizes and Colors"
+python api_shop/manage.py loaddata sizes.json colors.json
+
 echo "--> Load Brands"
 python api_shop/manage.py load_brands
 
