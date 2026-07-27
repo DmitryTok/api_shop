@@ -4,6 +4,10 @@ from addons.mixins import TimeStampMixin
 from product_variants.models import ProductVariant
 
 
+def product_image_upload_path(instance, filename):
+    return f"products/{instance.product_variant.sku}/{filename}"
+
+
 class ProductImage(TimeStampMixin):
     product_variant = models.ForeignKey(
         ProductVariant,
@@ -12,7 +16,7 @@ class ProductImage(TimeStampMixin):
     )
 
     image = models.ImageField(
-        upload_to="products/",
+        upload_to=product_image_upload_path,
     )
 
     is_main = models.BooleanField(
