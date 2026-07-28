@@ -39,4 +39,12 @@ class ProductImage(TimeStampMixin):
             models.Index(fields=["product_variant"]),
         ]
 
+        constraints = [
+            models.UniqueConstraint(
+            fields=["product_variant"],
+            condition=models.Q(is_main=True),
+            name="unique_main_image_per_product_variant",
+            ),
+        ]
+
 

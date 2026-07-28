@@ -1,6 +1,18 @@
 from django.contrib import admin
 
+from product_images.models import ProductImage
+
 from .models import ProductVariant
+
+
+class ProductImageInline(admin.TabularInline):
+    model = ProductImage
+    extra = 1
+    fields = (
+        "image",
+        "is_main",
+        "sort_order",
+    )
 
 
 @admin.register(ProductVariant)
@@ -31,3 +43,5 @@ class ProductVariantAdmin(admin.ModelAdmin):
         "size",
         "color",
     )
+
+    inlines = (ProductImageInline,)
