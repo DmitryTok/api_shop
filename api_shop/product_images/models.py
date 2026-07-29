@@ -3,9 +3,7 @@ from django.db import models
 from addons.mixins import TimeStampMixin
 from product_variants.models import ProductVariant
 
-
-def product_image_upload_path(instance, filename):
-    return f"products/{instance.product_variant.sku}/{filename}"
+from .utils import product_image_upload_path
 
 
 class ProductImage(TimeStampMixin):
