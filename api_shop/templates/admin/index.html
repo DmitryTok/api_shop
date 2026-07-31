@@ -1,0 +1,16 @@
+{% extends "admin/index.html" %}
+
+{% block page_actions %}
+    <div>
+      <form action="{% url 'admin:run_parser' %}" method="post" enctype="multipart/form-data" id="dashboard-parser-form">
+        {% csrf_token %}
+        <input type="file" name="parser_file" id="dashboard-file-input" style="display: none;"
+               onchange="document.getElementById('dashboard-parser-form').submit();">
+
+        <button type="button" onclick="document.getElementById('dashboard-file-input').click();">
+          <i class="fas fa-upload mr-1"></i>Download data from fixture
+        </button>
+      </form>
+    </div>
+    {{ block.super }}
+{% endblock %}
