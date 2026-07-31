@@ -1,6 +1,20 @@
 from django.contrib import admin
 
 from .models import Product
+from product_variants.models import ProductVariant
+
+class ProductVariantInline(admin.TabularInline):
+    model = ProductVariant
+    extra = 1
+
+    fields = (
+        "sku",
+        "size",
+        "color",
+        "gender",
+        "stock",
+        "is_active",
+    )
 
 
 @admin.register(Product)
@@ -30,3 +44,5 @@ class ProductAdmin(admin.ModelAdmin):
         "brand",
         "subcategory",
     )
+
+    inlines = (ProductVariantInline,)
