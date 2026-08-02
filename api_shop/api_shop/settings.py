@@ -77,6 +77,7 @@ INSTALLED_APPS = [
     'product_images',
     'discounts',
     'currencies',
+    'favorites',
     'cloudinary_storage',
     'cloudinary',
 ]
