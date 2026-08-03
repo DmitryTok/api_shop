@@ -1,10 +1,11 @@
 from django.contrib import admin
 
+from api_shop.admin import CustomModelAdmin
 from .models import ProductVariant
 
 
 @admin.register(ProductVariant)
-class ProductVariantAdmin(admin.ModelAdmin):
+class ProductVariantAdmin(CustomModelAdmin):
     list_display = (
         "id",
         "sku",

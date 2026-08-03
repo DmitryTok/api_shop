@@ -1,0 +1,89 @@
+<style>
+  .file-input {
+  display: none;
+  }
+
+  .upload-btn {
+    display: inline-block;
+    padding: 10px 20px;
+    background-color: #28a745; /* Зелений колір (або будь-який ваш) */
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    user-select: none;
+  }
+
+  .upload-btn:hover {
+    background-color: #218838;
+  }
+
+  .upload-btn:active {
+    transform: scale(0.98);
+  }
+
+  .white-code {
+    background-color: white;
+  }
+</style>
+<div>
+  <h1><strong>Example json format file</strong></h1>
+  <hr>
+  <pre class="white-code">
+    <code>
+      [
+        {
+            "model": "categories.category",
+            "fields": {
+                "name": "Men's Fashion",
+                "slug": "mens-fashion",
+                "is_active": true,
+                "is_hidden": false,
+            }
+        },
+        {
+            "model": "categories.category",
+            "fields": {
+                "name": "Women's Fashion",
+                "slug": "womens-fashion",
+                "is_active": true,
+                "is_hidden": false,
+            }
+        },
+        {
+            "model": "categories.category",
+            "fields": {
+                "name": "Sports & Outdoors",
+                "slug": "sports-outdoors",
+                "is_active": true,
+                "is_hidden": false,
+            }
+        }
+      ]
+    </code>
+  </pre>
+  <div class="d-flex align-items-center gap-2">
+    <input
+      type="file"
+      name="fixture_file"
+      id="fixture_file"
+      accept=".json"
+      onchange="this.form.querySelector('#submit-fixture-btn').click()"
+      required
+      hidden
+    />
+    <label for="fixture_file" class="btn btn-success mb-0" style="cursor: pointer;">
+      <i class="fas fa-upload mr-1"></i> Load file from PC
+    </label>
+    <button
+      type="submit"
+      id="submit-fixture-btn"
+      formaction="/load_fixture/"
+      formenctype="multipart/form-data"
+      hidden
+    ></button>
+  </div>
+</div>
+</div>

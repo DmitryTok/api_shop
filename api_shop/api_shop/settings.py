@@ -49,7 +49,7 @@ APPEND_SLASH = True
 
 INSTALLED_APPS = [
     'jazzmin',
-    'api_shop.apps.CustomAdminConfig',
+    'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
