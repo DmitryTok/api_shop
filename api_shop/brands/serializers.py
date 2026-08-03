@@ -16,4 +16,3 @@ class BrandSerializer(serializers.ModelSerializer):
                validated_data["name"]
            )
        return super().create(validated_data)
-

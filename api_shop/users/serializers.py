@@ -12,38 +12,14 @@ from rest_framework_simplejwt.exceptions import InvalidToken
 from rest_framework_simplejwt.serializers import TokenRefreshSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 from users.models import Term, UserTermsAcceptance
+from validators.validators_users import GoogleAuthTokenValidator, AcceptTermsValidator, TokenExceptionWrapperValidator, LoginAndPasswordValidator, UserRegisterEmailValidator, UserRegisterPasswordValidator, PasswordResetConfirmValidator, PasswordChangeValidator
 
 User = get_user_model()
 
 
 class GoogleAuthSerializer(serializers.Serializer):
-    token = serializers.CharField(required=True)
-    accept_terms = serializers.BooleanField(write_only=True, required=True)
-
-    def validate_token(self, token):
-        try:
-            id_info = id_token.verify_oauth2_token(
-                token, requests.Request(), os.getenv('GOOGLE_CLIENT_ID')
-            )
-
-            if id_info['iss'] not in [
-                'accounts.google.com',
-                'https://accounts.google.com',
-            ]:
-                raise serializers.ValidationError('Wrong issuer.')
-
-            return id_info
-        except Exception as e:
-            raise serializers.ValidationError(
-                f'Invalid Google token: {str(e)}'
-            )
-
-    def validate_accept_terms(self, value):
-        if value is not True:
-            raise serializers.ValidationError(
-                "You must accept the user agreement."
-            )
-        return value
+    token = serializers.CharField(required=True, validators=[GoogleAuthTokenValidator()])
+    accept_terms = serializers.BooleanField(write_only=True, required=True, validators=[AcceptTermsValidator()])
 
     def create(self, validated_data):
         id_info = validated_data.pop("token")
@@ -86,14 +62,8 @@ class GoogleAuthSerializer(serializers.Serializer):
 
 class CustomTokenRefreshSerializer(TokenRefreshSerializer):
     def validate(self, attrs):
-        try:
-            data = super().validate(attrs)
-        except User.DoesNotExist:
-            raise InvalidToken("User not found")
-        except Exception as e:
-            raise e
-
-        return data
+        wrapper = TokenExceptionWrapperValidator()
+        return wrapper(super().validate, attrs)
 
 
 class CustomTokenObtainPairSerializer(serializers.Serializer):
@@ -103,31 +73,11 @@ class CustomTokenObtainPairSerializer(serializers.Serializer):
     access = serializers.CharField(read_only=True)
     refresh = serializers.CharField(read_only=True)
 
+    class Meta:
+        validators = [LoginAndPasswordValidator()]
+
     def validate(self, attrs):
-        login = attrs.get("email_or_phone").lower().strip()
-        password = attrs.get("password")
-
-        if not login or not password:
-            raise serializers.ValidationError(
-                {"detail": "Both email_or_phone and password are required"}
-            )
-
-        try:
-            user_obj = User.objects.filter(is_active=True).get(
-                Q(email=login) | Q(profile__phone=login)
-            )
-        except User.DoesNotExist:
-            raise serializers.ValidationError(
-                {"detail": "No active account found with given credentials"}
-            )
-
-        if not user_obj.check_password(password):
-            raise serializers.ValidationError({"detail": "Invalid password"})
-
-        if not user_obj.is_active:
-            raise serializers.ValidationError(
-                {"detail": "User account is inactive"}
-            )
+        user_obj = attrs["user"]
 
         refresh = RefreshToken.for_user(user_obj)
 
@@ -151,39 +101,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ("email", "password", "confirm_password", "accept_terms")
-
-    def validate_email(self, value):
-        lower_email = value.lower()
-        if User.objects.filter(email__iexact=lower_email).exists():
-            raise serializers.ValidationError(
-                "A user with this email already exists."
-            )
-        return lower_email
-
-    def validate_accept_terms(self, value):
-        if value is not True:
-            raise serializers.ValidationError(
-                "You must accept the user agreement."
-            )
-        return value
-
-    def validate(self, data):
-        user_password = data.get("password", "").replace(' ', '')
-        confirm_password = data.get("confirm_password", "").replace(' ', '')
-
-        data["password"] = user_password
-        data["confirm_password"] = confirm_password
-
-        if user_password != confirm_password:
-            raise serializers.ValidationError(
-                {"password": "Password fields do not match."}
-            )
-
-        try:
-            validate_password(user_password)
-        except serializers.ValidationError as e:
-            raise serializers.ValidationError({"password": list(e.messages)})
-        return data
+        validators = [UserRegisterEmailValidator(), AcceptTermsValidator(), UserRegisterPasswordValidator()]
 
     def create(self, validated_data):
         password = validated_data.pop("password")
@@ -237,34 +155,12 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
         required=True, validators=[validate_password]
     )
 
+    class Meta:
+        validators = [PasswordResetConfirmValidator()]
+
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop("user", None)
         super().__init__(*args, **kwargs)
-
-    def validate(self, attrs):
-        if attrs['new_password'] != attrs['confirm_password']:
-            raise serializers.ValidationError(
-                {"password_confirm": "Passwords do not match."}
-            )
-
-        code = attrs['code']
-
-        redis_key = f"password_reset:{code}:user_id"
-        user_id = cache.get(redis_key)
-
-        if not user_id:
-            raise serializers.ValidationError(
-                {"code": "Invalid or expired reset code."}
-            )
-
-        try:
-            user = User.objects.get(id=user_id)
-        except User.DoesNotExist:
-            raise serializers.ValidationError({"code": "User not found."})
-
-        attrs['user'] = user
-        attrs['redis_key'] = redis_key
-        return attrs
 
     def save(self):
         password = self.validated_data["new_password"]
@@ -285,31 +181,8 @@ class PasswordChangeSerializer(serializers.Serializer):
         write_only=True,
     )
 
-    def validate(self, attrs):
-        user = self.context["request"].user
-
-        old_password = attrs.get("old_password")
-        new_password = attrs.get("new_password")
-        confirm_password = attrs.get("confirm_password")
-
-        if not user.check_password(old_password):
-            raise serializers.ValidationError(
-                {"old_password": "Password not correct"}
-            )
-
-        if user.check_password(new_password):
-            raise serializers.ValidationError(
-                {
-                    "new_password": "New password cannot be the same as the old password"
-                }
-            )
-
-        if new_password != confirm_password:
-            raise serializers.ValidationError(
-                {"confirm_password": "Password fields didn't match"}
-            )
-
-        return attrs
+    class Meta:
+        validators = [PasswordChangeValidator()]
 
     def save(self, **kwargs):
         user = self.context["request"].user
