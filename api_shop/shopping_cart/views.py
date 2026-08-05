@@ -33,15 +33,20 @@ class CartItemViewSet(ModelViewSet):
             user=request.user,
         )
 
-        product_variant_id = request.data.get("product_variant")
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
 
-        existing_item = CartItem.objects.filter(
+        product_variant = serializer.validated_data["product_variant"]
+        quantity = serializer.validated_data.get("quantity", 1)
+
+        existing_item, created = CartItem.objects.get_or_create(
             cart=cart,
-            product_variant_id=product_variant_id,
-        ).first()
+            product_variant=product_variant,
+            defaults={"quantity": quantity},
+        )
 
-        if existing_item:
-            new_quantity = existing_item.quantity + 1
+        if not created:
+            new_quantity = existing_item.quantity + quantity
 
             serializer = self.get_serializer(
                 existing_item,
@@ -56,9 +61,7 @@ class CartItemViewSet(ModelViewSet):
                 status=status.HTTP_200_OK,
             )
 
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save(cart=cart)
+        serializer = self.get_serializer(existing_item)
 
         return Response(
             serializer.data,

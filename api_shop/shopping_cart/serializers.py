@@ -6,7 +6,7 @@ from .models import CartItem, ShoppingCart
 class CartItemSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         product_variant = attrs.get("product_variant")
-        quantity = attrs.get("quantity")
+        quantity = attrs.get("quantity", 1)
 
         if self.instance:
             product_variant = (
@@ -20,13 +20,13 @@ class CartItemSerializer(serializers.ModelSerializer):
 
         if quantity < 0:
             raise serializers.ValidationError(
-                {"quantity": "Quantity cannot be negative."}
+                {"error": "Quantity cannot be negative."}
             )
 
         if quantity > product_variant.stock:
             raise serializers.ValidationError(
                 {
-                    "quantity":
+                    "error":
                     "Quantity cannot exceed available stock."
                 }
             )
