@@ -4,6 +4,17 @@ from api_shop.admin import CustomModelAdmin
 from .models import Category, Subcategory
 
 
+class SubcategoryInline(admin.TabularInline):
+    model = Subcategory
+    extra = 1
+    fields = (
+        "name",
+        "slug",
+        "is_active",
+        "is_hidden",
+    )
+
+
 @admin.register(Category)
 class CategoryAdmin(CustomModelAdmin):
     list_display = ("id", "name", "slug", "is_active", "is_hidden", "created_at")

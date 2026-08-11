@@ -2,24 +2,84 @@ import os
 from datetime import timedelta
 from pathlib import Path
 
-from addons.utils import getenv_int
 from dotenv import load_dotenv
+from django.core.exceptions import ImproperlyConfigured
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR.parent / ".env")
 
-SECRET_KEY = os.getenv('SECRET')
+def getenv_bool(variable_name: str, default: bool = False) -> bool:
+    raw_value = os.getenv(variable_name)
 
-DEBUG = True
+    if raw_value is None:
+        return default
 
-RENDER_EXTERNAL_HOSTNAME = os.getenv('RENDER_HOST')
+    value = raw_value.strip().lower()
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0']
+    if value in {"1", "true", "yes", "on"}:
+        return True
 
-if RENDER_EXTERNAL_HOSTNAME:
-    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
-else:
-    ALLOWED_HOSTS.append('*')
+    if value in {"0", "false", "no", "off"}:
+        return False
+
+    raise ImproperlyConfigured(
+        f"{variable_name} must be a boolean value: true or false"
+    )
+
+def getenv_int(variable_name: str, default: int | None = None) -> int:
+    raw_value = os.getenv(variable_name)
+
+    if raw_value is None or not raw_value.strip():
+        if default is not None:
+            return default
+
+        raise ImproperlyConfigured(
+            f"{variable_name} environment variable must be set"
+        )
+
+    try:
+        return int(raw_value)
+    except ValueError as error:
+        raise ImproperlyConfigured(
+            f"{variable_name} must be an integer"
+        ) from error
+
+def getenv_list(variable_name: str, default: str = "") -> list[str]:
+    """Read a comma-separated environment variable as a clean list."""
+    value = os.getenv(variable_name, default)
+    return [item.strip() for item in value.split(",") if item.strip()]
+
+
+APP_ENV = os.getenv("APP_ENV", "").strip().lower()
+VALID_APP_ENVS = {"local", "staging", "production"}
+
+if APP_ENV not in VALID_APP_ENVS:
+    raise ImproperlyConfigured(
+        "APP_ENV must be one of: local, staging, production"
+    )
+
+SECRET_KEY = os.getenv('SECRET', '')
+
+if not SECRET_KEY:
+    raise ImproperlyConfigured("SECRET environment variable must be set")
+
+DEBUG = getenv_bool("DEBUG", default=False)
+
+if APP_ENV in {"staging", "production"} and DEBUG:
+    raise ImproperlyConfigured(f"DEBUG must be false when APP_ENV={APP_ENV}")
+
+ALLOWED_HOSTS = getenv_list("ALLOWED_HOSTS")
+
+if not ALLOWED_HOSTS:
+    raise ImproperlyConfigured(
+        "ALLOWED_HOSTS environment variable must be set"
+    )
+
+CLOUDINARY_STORAGE = {
+    "CLOUD_NAME": os.getenv("CLOUDINARY_CLOUD_NAME"),
+    "API_KEY": os.getenv("CLOUDINARY_API_KEY"),
+    "API_SECRET": os.getenv("CLOUDINARY_API_SECRET"),
+}
 
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
@@ -27,22 +87,8 @@ USE_X_FORWARDED_HOST = True
 USE_X_FORWARDED_PORT = True
 
 CORS_ALLOW_CREDENTIALS = True
-
-CORS_ALLOWED_ORIGINS = (
-    os.getenv('CORS_ALLOWED_ORIGINS', '').split(',')
-    if os.getenv('CORS_ALLOWED_ORIGINS')
-    else []
-)
-
-CSRF_TRUSTED_ORIGINS = (
-    os.getenv('CSRF_TRUSTED_ORIGINS', '').split(',')
-    if os.getenv('CSRF_TRUSTED_ORIGINS')
-    else []
-)
-
-if RENDER_EXTERNAL_HOSTNAME:
-    CORS_ALLOWED_ORIGINS.append(RENDER_EXTERNAL_HOSTNAME)
-    CSRF_TRUSTED_ORIGINS.append(RENDER_EXTERNAL_HOSTNAME)
+CORS_ALLOWED_ORIGINS = getenv_list("CORS_ALLOWED_ORIGINS")
+CSRF_TRUSTED_ORIGINS = getenv_list("CSRF_TRUSTED_ORIGINS")
 
 APPEND_SLASH = True
 
@@ -71,6 +117,10 @@ INSTALLED_APPS = [
     'discounts',
     'currencies',
     'custom_admin',
+    'favorites',
+    'shopping_cart',
+    'cloudinary_storage',
+    'cloudinary',
 ]
 
 MIDDLEWARE = [
@@ -112,7 +162,7 @@ DATABASES = {
         'USER': os.getenv('DB_USER'),
         'PASSWORD': os.getenv('DB_PASSWORD'),
         'HOST': os.getenv('DB_HOST'),
-        'PORT': getenv_int('DB_PORT'),
+        'PORT': getenv_int('DB_PORT', 5432),
     }
 }
 
@@ -147,12 +197,19 @@ USE_I18N = True
 USE_TZ = True
 
 
-STATIC_URL = 'static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'static/')
-STATICFILES_DIRS = ['media/']
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / "static"
 
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
+MEDIA_ROOT = BASE_DIR / "media"
 MEDIA_URL = 'media/'
+STORAGES = {
+    "default": {
+        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+}
 
 REST_FRAMEWORK = {
     'DATE_FORMAT': '%d/%m/%Y',
@@ -178,7 +235,7 @@ REST_FRAMEWORK = {
     },
 }
 
-CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "redis://redis:6379/1")
+CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "redis://redis:6379/0")
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
@@ -204,9 +261,9 @@ EMAIL_BACKEND = "anymail.backends.brevo.EmailBackend"
 ANYMAIL = {"BREVO_API_KEY": os.getenv("BREVO_API_KEY"), "REQUESTS_TIMEOUT": 10}
 
 
-DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL')
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@example.com')
 
-ALGORITHM = os.getenv('ALGORITHM')
+ALGORITHM = os.getenv('ALGORITHM', 'HS256')
 
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),

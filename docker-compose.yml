@@ -23,6 +23,7 @@ services:
     command: >
       bash -c "
       python api_shop/manage.py migrate &&
+      python api_shop/manage.py loaddata sizes.json colors.json &&
       python api_shop/manage.py load_brands &&
       python api_shop/manage.py load_category &&
       python api_shop/manage.py load_terms &&

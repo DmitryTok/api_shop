@@ -3,6 +3,8 @@ from django.db import models
 from addons.mixins import TimeStampMixin
 from product_variants.models import ProductVariant
 
+from .utils import product_image_upload_path
+
 
 class ProductImage(TimeStampMixin):
     product_variant = models.ForeignKey(
@@ -12,7 +14,7 @@ class ProductImage(TimeStampMixin):
     )
 
     image = models.ImageField(
-        upload_to="products/",
+        upload_to=product_image_upload_path,
     )
 
     is_main = models.BooleanField(
@@ -33,6 +35,14 @@ class ProductImage(TimeStampMixin):
 
         indexes = [
             models.Index(fields=["product_variant"]),
+        ]
+
+        constraints = [
+            models.UniqueConstraint(
+            fields=["product_variant"],
+            condition=models.Q(is_main=True),
+            name="unique_main_image_per_product_variant",
+            ),
         ]
 
 
