@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from validators.validators_categories import CategoryNameValidator
+from validators.validators_categories import category_name_validator
 from .models import Category, Subcategory
 from addons.slugify import generate_unique_slug
 
@@ -20,7 +20,7 @@ class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
         fields = "__all__"
-        validators = [CategoryNameValidator()]
+        validators = [category_name_validator]
 
 
 class SubcategorySerializer(serializers.ModelSerializer):
@@ -38,4 +38,4 @@ class SubcategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Subcategory
         fields = "__all__"
-        validators = [CategoryNameValidator()]
+        validators = [category_name_validator]

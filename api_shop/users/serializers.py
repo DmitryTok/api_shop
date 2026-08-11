@@ -12,14 +12,14 @@ from rest_framework_simplejwt.exceptions import InvalidToken
 from rest_framework_simplejwt.serializers import TokenRefreshSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 from users.models import Term, UserTermsAcceptance
-from validators.validators_users import GoogleAuthTokenValidator, AcceptTermsValidator, TokenExceptionWrapperValidator, LoginAndPasswordValidator, UserRegisterEmailValidator, UserRegisterPasswordValidator, PasswordResetConfirmValidator, PasswordChangeValidator
+from validators.validators_users import google_token_validator, google_token_validator, accept_terms_validator, custom_token_validator, validate_login_and_password, register_user_email_validator, register_user_password_validator, password_reset_confirm_validator, validate_change_password
 
 User = get_user_model()
 
 
 class GoogleAuthSerializer(serializers.Serializer):
-    token = serializers.CharField(required=True, validators=[GoogleAuthTokenValidator()])
-    accept_terms = serializers.BooleanField(write_only=True, required=True, validators=[AcceptTermsValidator()])
+    token = serializers.CharField(required=True, validators=[google_token_validator])
+    accept_terms = serializers.BooleanField(write_only=True, required=True, validators=[accept_terms_validator])
 
     def create(self, validated_data):
         id_info = validated_data.pop("token")
@@ -61,9 +61,8 @@ class GoogleAuthSerializer(serializers.Serializer):
 
 
 class CustomTokenRefreshSerializer(TokenRefreshSerializer):
-    def validate(self, attrs):
-        wrapper = TokenExceptionWrapperValidator()
-        return wrapper(super().validate, attrs)
+    def validate(self, attrs) -> None:
+        return custom_token_validator(validate_func=super().validate, attrs=attrs)
 
 
 class CustomTokenObtainPairSerializer(serializers.Serializer):
@@ -73,18 +72,8 @@ class CustomTokenObtainPairSerializer(serializers.Serializer):
     access = serializers.CharField(read_only=True)
     refresh = serializers.CharField(read_only=True)
 
-    class Meta:
-        validators = [LoginAndPasswordValidator()]
-
-    def validate(self, attrs):
-        user_obj = attrs["user"]
-
-        refresh = RefreshToken.for_user(user_obj)
-
-        return {
-            "refresh": str(refresh),
-            "access": str(refresh.access_token),
-        }
+    def validate(self, attrs) -> dict:
+        return validate_login_and_password(attrs=attrs)
 
 
 class UserRegisterSerializer(serializers.ModelSerializer):
@@ -101,7 +90,8 @@ class UserRegisterSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ("email", "password", "confirm_password", "accept_terms")
-        validators = [UserRegisterEmailValidator(), AcceptTermsValidator(), UserRegisterPasswordValidator()]
+        validators = [register_user_email_validator, accept_terms_validator, register_user_password_validator]
+
 
     def create(self, validated_data):
         password = validated_data.pop("password")
@@ -155,12 +145,12 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
         required=True, validators=[validate_password]
     )
 
-    class Meta:
-        validators = [PasswordResetConfirmValidator()]
-
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop("user", None)
         super().__init__(*args, **kwargs)
+
+    def validate(self, attrs) -> dict:
+        return password_reset_confirm_validator(attrs=attrs)
 
     def save(self):
         password = self.validated_data["new_password"]
@@ -181,8 +171,9 @@ class PasswordChangeSerializer(serializers.Serializer):
         write_only=True,
     )
 
-    class Meta:
-        validators = [PasswordChangeValidator()]
+    def validate(self, attrs) -> dict:
+        return validate_change_password(user=self.context["request"].user, attrs=attrs)
+
 
     def save(self, **kwargs):
         user = self.context["request"].user
