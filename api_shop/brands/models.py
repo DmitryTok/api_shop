@@ -1,6 +1,5 @@
-from django.db import models
-
 from addons.mixins import TimeStampMixin
+from django.db import models
 
 
 class Brand(TimeStampMixin):

@@ -12,5 +12,3 @@ class ProductVariantListAPIView(ListAPIView):
 class ProductVariantRetrieveAPIView(RetrieveAPIView):
     queryset = ProductVariant.objects.select_related("product", "size", "color").all()
     serializer_class = ProductVariantSerializer
-
-

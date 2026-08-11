@@ -4,6 +4,7 @@ from django.core.cache import cache
 from django.core.mail import send_mail
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
+
 from users.utils import gen_code
 
 
@@ -24,9 +25,7 @@ def send_email_code(user, task_type: str, request=None):
         match task_type:
             case "activation":
                 subject = "Activate your account"
-                message = (
-                    f"Hello {user.email},\n\nHere your activation code: {code}"
-                )
+                message = f"Hello {user.email},\n\nHere your activation code: {code}"
             case "password_reset":
                 subject = "Reset your password"
                 message = f"Hello {user.email},\n\nYour password reset code is: {code}"

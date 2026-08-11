@@ -12,4 +12,3 @@ class ProductListAPIView(ListAPIView):
 class ProductRetrieveAPIView(RetrieveAPIView):
     queryset = Product.objects.select_related("brand", "subcategory").all()
     serializer_class = ProductSerializer
-

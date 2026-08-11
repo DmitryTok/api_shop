@@ -1,9 +1,9 @@
-from profiles.models import Profile
-from profiles.serializers import ProfileSerializer
+from api_shop.permissions import IsOwner
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import ModelViewSet
 
-from api_shop.permissions import IsOwner
+from profiles.models import Profile
+from profiles.serializers import ProfileSerializer
 
 
 class ProfileViewSet(ModelViewSet):

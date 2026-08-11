@@ -1,7 +1,6 @@
+from addons.mixins import TimeStampMixin
 from django.conf import settings
 from django.db import models
-
-from addons.mixins import TimeStampMixin
 from product_variants.models import ProductVariant
 
 

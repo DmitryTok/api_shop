@@ -27,9 +27,7 @@ def validate_phone(value: str | None) -> str | None:
 def validate_birthday(value):
     today = date.today()
     age = (
-        today.year
-        - value.year
-        - ((today.month, today.day) < (value.month, value.day))
+        today.year - value.year - ((today.month, today.day) < (value.month, value.day))
     )
 
     if value > date.today():

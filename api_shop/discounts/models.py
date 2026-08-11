@@ -1,6 +1,5 @@
-from django.db import models
-
 from addons.mixins import TimeStampMixin
+from django.db import models
 from product_variants.models import ProductVariant
 
 
@@ -36,5 +35,3 @@ class Discount(TimeStampMixin):
             models.Index(fields=["start_at"]),
             models.Index(fields=["end_at"]),
         ]
-
-

@@ -12,5 +12,3 @@ class CurrencyListAPIView(ListAPIView):
 class CurrencyRetrieveAPIView(RetrieveAPIView):
     queryset = Currency.objects.select_related("product_variant").all()
     serializer_class = CurrencySerializer
-
-

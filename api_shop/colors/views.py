@@ -12,5 +12,3 @@ class ColorListAPIView(ListAPIView):
 class ColorRetrieveAPIView(RetrieveAPIView):
     queryset = Color.objects.all()
     serializer_class = ColorSerializer
-
-

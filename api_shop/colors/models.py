@@ -1,6 +1,5 @@
-from django.db import models
-
 from addons.mixins import TimeStampMixin
+from django.db import models
 
 
 class Color(TimeStampMixin):
@@ -23,5 +22,3 @@ class Color(TimeStampMixin):
         verbose_name = "Color"
         verbose_name_plural = "Colors"
         ordering = ["name"]
-
-

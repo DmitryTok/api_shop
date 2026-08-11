@@ -2,17 +2,18 @@ import textwrap
 import typing as t
 
 from django.core.management.base import BaseCommand
+
 from users.models import Term
 
 
 class Command(BaseCommand):
-    help = 'Automatically creates terms if they do not exist'
+    help = "Automatically creates terms if they do not exist"
 
     def handle(self, *args: t.Any, **options: t.Any) -> None:
-        self.stdout.write('Start loading Terms...')
+        self.stdout.write("Start loading Terms...")
 
         obj, created = Term.objects.get_or_create(
-            version='1.0',
+            version="1.0",
             text=textwrap.dedent("""
             Користувач підтверджує достовірність наданих даних.
             Користувач несе відповідальність за безпеку свого акаунта та пароля.
@@ -27,7 +28,7 @@ class Command(BaseCommand):
         )
 
         if created:
-            self.stdout.write(self.style.SUCCESS('Terms loaded successfully'))
+            self.stdout.write(self.style.SUCCESS("Terms loaded successfully"))
 
         else:
-            self.stdout.write(self.style.SUCCESS('Terms already exist'))
+            self.stdout.write(self.style.SUCCESS("Terms already exist"))

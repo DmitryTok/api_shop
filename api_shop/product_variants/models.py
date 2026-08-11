@@ -1,9 +1,9 @@
-from django.db import models
-
 from addons.mixins import TimeStampMixin
+from colors.models import Color
+from django.db import models
 from products.models import Product
 from sizes.models import Size
-from colors.models import Color
+
 
 class Gender(models.TextChoices):
     MALE = "male", "Male"
@@ -25,9 +25,9 @@ class ProductVariant(TimeStampMixin):
     )
 
     color = models.ForeignKey(
-       Color,
-       on_delete=models.CASCADE,
-       related_name="product_variants",
+        Color,
+        on_delete=models.CASCADE,
+        related_name="product_variants",
     )
 
     sku = models.CharField(
