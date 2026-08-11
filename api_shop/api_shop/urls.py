@@ -8,12 +8,12 @@ from drf_spectacular.views import (
     SpectacularSwaggerView
 )
 
-from api_shop.views import run_fixture_loader_fixture_view
+from api_shop.views import run_fixture_loader_view
 from users.views import CustomTokenObtainPairView, CustomTokenRefreshView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('load_fixture/', run_fixture_loader_fixture_view, name="load_fixture"),
+    path('load_fixture/<str:app_name>/<str:model_name>/', run_fixture_loader_view, name="load_fixture"),
     path('api/users/', include('users.urls')),
     path('api/profiles/', include('profiles.urls')),
     path(

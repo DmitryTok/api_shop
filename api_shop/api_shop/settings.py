@@ -70,6 +70,7 @@ INSTALLED_APPS = [
     'product_images',
     'discounts',
     'currencies',
+    'custom_admin',
 ]
 
 MIDDLEWARE = [

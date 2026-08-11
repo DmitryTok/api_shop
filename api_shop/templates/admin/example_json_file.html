@@ -1,3 +1,4 @@
+{% load custom_tags %}
 <style>
   .file-input {
   display: none;
@@ -30,47 +31,16 @@
 </style>
 <div>
   <h1><strong>Example json format file</strong></h1>
+  <div><strong>You can only load json format files</strong></div>
   <hr>
-  <pre class="white-code">
-    <code>
-      [
-        {
-            "model": "categories.category",
-            "fields": {
-                "name": "Men's Fashion",
-                "slug": "mens-fashion",
-                "is_active": true,
-                "is_hidden": false,
-            }
-        },
-        {
-            "model": "categories.category",
-            "fields": {
-                "name": "Women's Fashion",
-                "slug": "womens-fashion",
-                "is_active": true,
-                "is_hidden": false,
-            }
-        },
-        {
-            "model": "categories.category",
-            "fields": {
-                "name": "Sports & Outdoors",
-                "slug": "sports-outdoors",
-                "is_active": true,
-                "is_hidden": false,
-            }
-        }
-      ]
-    </code>
-  </pre>
+  <pre class="white-code"><code>{% generate_example_json opts.app_label opts.model_name %}</code></pre>
   <div class="d-flex align-items-center gap-2">
     <input
       type="file"
       name="fixture_file"
       id="fixture_file"
       accept=".json"
-      onchange="this.form.querySelector('#submit-fixture-btn').click()"
+      onchange="if(this.value) document.getElementById('submit-fixture-btn').click();"
       required
       hidden
     />
@@ -80,10 +50,10 @@
     <button
       type="submit"
       id="submit-fixture-btn"
-      formaction="/load_fixture/"
+      formaction="{% url 'load_fixture' opts.app_label opts.model_name %}"
       formenctype="multipart/form-data"
       hidden
     ></button>
   </div>
 </div>
-</div>
+
