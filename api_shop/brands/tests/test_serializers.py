@@ -1,15 +1,17 @@
-from rest_framework.test import APITestCase
+import pytest
 
 from brands.serializers import BrandSerializer
 
 
-class BrandSerializerTestCase(APITestCase):
-    def test_create_brand_without_slug(self):
-        data = {
-            "name": "Nike",
-        }
+@pytest.mark.django_db
+def test_create_brand_without_slug():
+    data = {
+        "name": "Nike",
+    }
 
-        serializer = BrandSerializer(data=data)
-        self.assertTrue(serializer.is_valid())
-        brand = serializer.save()
-        self.assertEqual(brand.slug, "nike")
+    serializer = BrandSerializer(data=data)
+
+    assert serializer.is_valid()
+    brand = serializer.save()
+
+    assert brand.slug == "nike"
