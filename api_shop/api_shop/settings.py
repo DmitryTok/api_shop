@@ -311,4 +311,5 @@ if DEBUG:
 
     DEBUG_TOOLBAR_CONFIG = {
         'SHOW_TOOLBAR_CALLBACK': lambda request: False,
+        'IS_RUNNING_TESTS': False,
     }
