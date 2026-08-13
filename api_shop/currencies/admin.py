@@ -1,10 +1,11 @@
 from django.contrib import admin
 
+from api_shop.admin import CustomModelAdmin
 from .models import Currency
 
 
 @admin.register(Currency)
-class CurrencyAdmin(admin.ModelAdmin):
+class CurrencyAdmin(CustomModelAdmin):
     list_display = (
         "id",
         "product_variant",

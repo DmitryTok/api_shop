@@ -1,10 +1,11 @@
 from django.contrib import admin
 
+from api_shop.admin import CustomModelAdmin
 from .models import Size
 
 
 @admin.register(Size)
-class SizeAdmin(admin.ModelAdmin):
+class SizeAdmin(CustomModelAdmin):
     list_display = (
         "id",
         "name",

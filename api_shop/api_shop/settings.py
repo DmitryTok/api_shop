@@ -116,6 +116,7 @@ INSTALLED_APPS = [
     'product_images',
     'discounts',
     'currencies',
+    'custom_admin',
     'favorites',
     'shopping_cart',
     'cloudinary_storage',
@@ -140,7 +141,7 @@ AUTH_USER_MODEL = 'users.CustomUser'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / "Templates"],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -182,7 +183,7 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
     {
-        'NAME': 'users.validators.RegexPasswordValidator',
+        'NAME': 'validators.validators_users.RegexPasswordValidator',
     },
 ]
 

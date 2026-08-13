@@ -1,5 +1,6 @@
 from django.contrib import admin
 
+from api_shop.admin import CustomModelAdmin
 from product_images.models import ProductImage
 
 from .models import ProductVariant
@@ -16,7 +17,7 @@ class ProductImageInline(admin.TabularInline):
 
 
 @admin.register(ProductVariant)
-class ProductVariantAdmin(admin.ModelAdmin):
+class ProductVariantAdmin(CustomModelAdmin):
     list_display = (
         "id",
         "sku",

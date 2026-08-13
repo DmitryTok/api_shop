@@ -1,5 +1,6 @@
 from django.contrib import admin
 
+from api_shop.admin import CustomModelAdmin
 from .models import Product
 from product_variants.models import ProductVariant
 
@@ -18,7 +19,7 @@ class ProductVariantInline(admin.TabularInline):
 
 
 @admin.register(Product)
-class ProductAdmin(admin.ModelAdmin):
+class ProductAdmin(CustomModelAdmin):
     list_display = (
         "id",
         "name",

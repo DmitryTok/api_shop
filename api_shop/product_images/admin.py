@@ -1,10 +1,11 @@
 from django.contrib import admin
 
+from api_shop.admin import CustomModelAdmin
 from .models import ProductImage
 
 
 @admin.register(ProductImage)
-class ProductImageAdmin(admin.ModelAdmin):
+class ProductImageAdmin(CustomModelAdmin):
     list_display = (
         "id",
         "product_variant",

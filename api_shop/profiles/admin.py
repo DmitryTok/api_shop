@@ -1,9 +1,11 @@
 from django.contrib import admin
+
+from api_shop.admin import CustomModelAdmin
 from profiles.models import Profile
 
 
 @admin.register(Profile)
-class CustomUserAdmin(admin.ModelAdmin):
+class CustomUserAdmin(CustomModelAdmin):
     list_display = ('id', 'user__email')
     search_fields = ('id', 'user__email')
     list_filter = ('id', 'user__email')

@@ -3,7 +3,8 @@ from enum import IntEnum
 from addons.int_enum import BaseIntEnumMixin
 from django.contrib.auth import get_user_model
 from django.db import models
-from profiles.validators import validate_birthday, validate_phone
+
+from validators.validators_profiles import profile_birthday_validator, profile_phone_validator
 
 User = get_user_model()
 
@@ -44,10 +45,10 @@ class Profile(models.Model):
         default=None,
     )
     birthday = models.DateField(
-        null=True, blank=True, validators=[validate_birthday]
+        null=True, blank=True, validators=[profile_birthday_validator]
     )
     phone = models.CharField(
-        max_length=15, null=True, blank=True, validators=[validate_phone]
+        max_length=15, null=True, blank=True, validators=[profile_phone_validator]
     )
 
     user = models.OneToOneField(
