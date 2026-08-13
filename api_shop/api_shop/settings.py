@@ -183,7 +183,7 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
     {
-        'NAME': 'users.validators.RegexPasswordValidator',
+        'NAME': 'validators.validators_users.RegexPasswordValidator',
     },
 ]
 
