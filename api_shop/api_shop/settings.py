@@ -2,6 +2,7 @@ import os
 from datetime import timedelta
 from pathlib import Path
 
+import dj_database_url
 from django.core.exceptions import ImproperlyConfigured
 from dotenv import load_dotenv
 
@@ -69,6 +70,23 @@ ALLOWED_HOSTS = getenv_list("ALLOWED_HOSTS")
 
 if not ALLOWED_HOSTS:
     raise ImproperlyConfigured("ALLOWED_HOSTS environment variable must be set")
+
+IS_LOCAL_ENV = APP_ENV == "local"
+
+SECURE_SSL_REDIRECT = getenv_bool("SECURE_SSL_REDIRECT", default=not IS_LOCAL_ENV)
+SESSION_COOKIE_SECURE = getenv_bool("SESSION_COOKIE_SECURE", default=not IS_LOCAL_ENV)
+CSRF_COOKIE_SECURE = getenv_bool("CSRF_COOKIE_SECURE", default=not IS_LOCAL_ENV)
+
+SECURE_HSTS_SECONDS = getenv_int(
+    "SECURE_HSTS_SECONDS", default=0 if IS_LOCAL_ENV else 3600
+)
+SECURE_HSTS_INCLUDE_SUBDOMAINS = getenv_bool(
+    "SECURE_HSTS_INCLUDE_SUBDOMAINS", default=not IS_LOCAL_ENV
+)
+SECURE_HSTS_PRELOAD = getenv_bool("SECURE_HSTS_PRELOAD", default=False)
+
+X_FRAME_OPTIONS = os.getenv("X_FRAME_OPTIONS", "DENY")
+SECURE_CONTENT_TYPE_NOSNIFF = getenv_bool("SECURE_CONTENT_TYPE_NOSNIFF", default=True)
 
 CLOUDINARY_STORAGE = {
     "CLOUD_NAME": os.getenv("CLOUDINARY_CLOUD_NAME"),
@@ -149,16 +167,27 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "api_shop.wsgi.application"
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.getenv("DB_NAME"),
-        "USER": os.getenv("DB_USER"),
-        "PASSWORD": os.getenv("DB_PASSWORD"),
-        "HOST": os.getenv("DB_HOST"),
-        "PORT": getenv_int("DB_PORT", 5432),
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+if DATABASE_URL:
+    DATABASES = {
+        "default": dj_database_url.parse(
+            DATABASE_URL,
+            conn_max_age=600,
+            ssl_require=True,
+        )
     }
-}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": os.getenv("DB_NAME"),
+            "USER": os.getenv("DB_USER"),
+            "PASSWORD": os.getenv("DB_PASSWORD"),
+            "HOST": os.getenv("DB_HOST"),
+            "PORT": getenv_int("DB_PORT", 5432),
+        }
+    }
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -201,7 +230,7 @@ STORAGES = {
         "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
     },
     "staticfiles": {
-        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        "BACKEND": "addons.storage.TolerantStaticFilesStorage",
     },
 }
 
@@ -297,6 +326,36 @@ MAX_REFRESH_ATTEMPTS = int(os.getenv("MAX_REFRESH_ATTEMPTS", 5))
 
 PASSWORD_RESET_TIMEOUT = int(os.getenv("PASSWORD_RESET_TIMEOUT_HR", 24)) * 60 * 60
 REFRESH_TOKEN_TIMEOUT = int(os.getenv("REFRESH_TOKEN_TIMEOUT", 24)) * 60 * 60
+
+DJANGO_LOG_LEVEL = os.getenv("DJANGO_LOG_LEVEL", "INFO")
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "[{levelname}] {asctime} {name} — {message}",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": DJANGO_LOG_LEVEL,
+    },
+    "loggers": {
+        "django.request": {
+            "handlers": ["console"],
+            "level": "ERROR",
+            "propagate": False,
+        },
+    },
+}
 
 if DEBUG:
     INSTALLED_APPS.append("debug_toolbar")

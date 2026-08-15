@@ -1,6 +1,7 @@
 services:
   db:
     image: postgres:16
+    restart: unless-stopped
     environment:
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USER}
@@ -10,7 +11,7 @@ services:
     volumes:
       - db_data:/var/lib/postgresql/data/
     ports:
-      - "5433:5432"
+      - "127.0.0.1:5433:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
       interval: 5s
@@ -19,15 +20,14 @@ services:
 
   web:
     build: .
+    restart: unless-stopped
     entrypoint: ""
+    # Same principle as entrypoint.sh: automatic boot only migrates and
+    # serves. Reference data and superuser creation are deliberate manual
+    # steps — run `make seed` / `make superuser` after the stack is up.
     command: >
       bash -c "
       python api_shop/manage.py migrate &&
-      python api_shop/manage.py loaddata sizes.json colors.json &&
-      python api_shop/manage.py load_brands &&
-      python api_shop/manage.py load_category &&
-      python api_shop/manage.py load_terms &&
-      python api_shop/manage.py create_default_superuser &&
       python api_shop/manage.py runserver 0.0.0.0:8000
       "
 
@@ -43,12 +43,18 @@ services:
       db:
         condition: service_healthy
       redis:
-        condition: service_started
+        condition: service_healthy
 
   redis:
     image: redis:7-alpine
+    restart: unless-stopped
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
 volumes:
   static_value:

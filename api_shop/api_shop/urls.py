@@ -1,3 +1,4 @@
+from addons.health import health_check
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
@@ -10,6 +11,7 @@ from drf_spectacular.views import (
 from users.views import CustomTokenObtainPairView, CustomTokenRefreshView
 
 urlpatterns = [
+    path("health/", health_check, name="health-check"),
     path("admin/", admin.site.urls),
     path("api/users/", include("users.urls")),
     path("api/profiles/", include("profiles.urls")),
