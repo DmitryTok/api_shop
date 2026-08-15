@@ -1,10 +1,10 @@
 import pytest
-from django.core.management import call_command
-
 from brands.models import Brand
 from categories.models import Category, Subcategory
 from colors.models import Color
+from django.core.management import call_command
 from sizes.models import Size
+
 from users.models import Term
 
 
