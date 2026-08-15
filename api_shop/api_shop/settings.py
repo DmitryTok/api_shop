@@ -2,11 +2,13 @@ import os
 from datetime import timedelta
 from pathlib import Path
 
-from dotenv import load_dotenv
+import dj_database_url
 from django.core.exceptions import ImproperlyConfigured
+from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR.parent / ".env")
+
 
 def getenv_bool(variable_name: str, default: bool = False) -> bool:
     raw_value = os.getenv(variable_name)
@@ -26,6 +28,7 @@ def getenv_bool(variable_name: str, default: bool = False) -> bool:
         f"{variable_name} must be a boolean value: true or false"
     )
 
+
 def getenv_int(variable_name: str, default: int | None = None) -> int:
     raw_value = os.getenv(variable_name)
 
@@ -33,16 +36,13 @@ def getenv_int(variable_name: str, default: int | None = None) -> int:
         if default is not None:
             return default
 
-        raise ImproperlyConfigured(
-            f"{variable_name} environment variable must be set"
-        )
+        raise ImproperlyConfigured(f"{variable_name} environment variable must be set")
 
     try:
         return int(raw_value)
     except ValueError as error:
-        raise ImproperlyConfigured(
-            f"{variable_name} must be an integer"
-        ) from error
+        raise ImproperlyConfigured(f"{variable_name} must be an integer") from error
+
 
 def getenv_list(variable_name: str, default: str = "") -> list[str]:
     """Read a comma-separated environment variable as a clean list."""
@@ -54,11 +54,9 @@ APP_ENV = os.getenv("APP_ENV", "").strip().lower()
 VALID_APP_ENVS = {"local", "staging", "production"}
 
 if APP_ENV not in VALID_APP_ENVS:
-    raise ImproperlyConfigured(
-        "APP_ENV must be one of: local, staging, production"
-    )
+    raise ImproperlyConfigured("APP_ENV must be one of: local, staging, production")
 
-SECRET_KEY = os.getenv('SECRET', '')
+SECRET_KEY = os.getenv("SECRET", "")
 
 if not SECRET_KEY:
     raise ImproperlyConfigured("SECRET environment variable must be set")
@@ -71,9 +69,24 @@ if APP_ENV in {"staging", "production"} and DEBUG:
 ALLOWED_HOSTS = getenv_list("ALLOWED_HOSTS")
 
 if not ALLOWED_HOSTS:
-    raise ImproperlyConfigured(
-        "ALLOWED_HOSTS environment variable must be set"
-    )
+    raise ImproperlyConfigured("ALLOWED_HOSTS environment variable must be set")
+
+IS_LOCAL_ENV = APP_ENV == "local"
+
+SECURE_SSL_REDIRECT = getenv_bool("SECURE_SSL_REDIRECT", default=not IS_LOCAL_ENV)
+SESSION_COOKIE_SECURE = getenv_bool("SESSION_COOKIE_SECURE", default=not IS_LOCAL_ENV)
+CSRF_COOKIE_SECURE = getenv_bool("CSRF_COOKIE_SECURE", default=not IS_LOCAL_ENV)
+
+SECURE_HSTS_SECONDS = getenv_int(
+    "SECURE_HSTS_SECONDS", default=0 if IS_LOCAL_ENV else 3600
+)
+SECURE_HSTS_INCLUDE_SUBDOMAINS = getenv_bool(
+    "SECURE_HSTS_INCLUDE_SUBDOMAINS", default=not IS_LOCAL_ENV
+)
+SECURE_HSTS_PRELOAD = getenv_bool("SECURE_HSTS_PRELOAD", default=False)
+
+X_FRAME_OPTIONS = os.getenv("X_FRAME_OPTIONS", "DENY")
+SECURE_CONTENT_TYPE_NOSNIFF = getenv_bool("SECURE_CONTENT_TYPE_NOSNIFF", default=True)
 
 CLOUDINARY_STORAGE = {
     "CLOUD_NAME": os.getenv("CLOUDINARY_CLOUD_NAME"),
@@ -81,7 +94,7 @@ CLOUDINARY_STORAGE = {
     "API_SECRET": os.getenv("CLOUDINARY_API_SECRET"),
 }
 
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 USE_X_FORWARDED_HOST = True
 USE_X_FORWARDED_PORT = True
@@ -94,143 +107,154 @@ APPEND_SLASH = True
 
 
 INSTALLED_APPS = [
-    'jazzmin',
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'corsheaders',
-    'rest_framework',
-    'rest_framework_simplejwt',
-    'drf_spectacular',
-    'users',
-    'profiles',
-    'categories',
-    'brands',
-    'products',
-    'product_variants',
-    'sizes',
-    'colors',
-    'product_images',
-    'discounts',
-    'currencies',
-    'favorites',
-    'shopping_cart',
-    'cloudinary_storage',
-    'cloudinary',
+    "jazzmin",
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    "corsheaders",
+    "rest_framework",
+    "rest_framework_simplejwt",
+    "drf_spectacular",
+    "users",
+    "profiles",
+    "categories",
+    "brands",
+    "products",
+    "product_variants",
+    "sizes",
+    "colors",
+    "product_images",
+    "discounts",
+    "currencies",
+    "favorites",
+    "shopping_cart",
+    "cloudinary_storage",
+    "cloudinary",
 ]
 
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware',
-    'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "corsheaders.middleware.CorsMiddleware",
+    "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-ROOT_URLCONF = 'api_shop.urls'
-AUTH_USER_MODEL = 'users.CustomUser'
+ROOT_URLCONF = "api_shop.urls"
+AUTH_USER_MODEL = "users.CustomUser"
 
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
             ],
         },
     },
 ]
 
-WSGI_APPLICATION = 'api_shop.wsgi.application'
+WSGI_APPLICATION = "api_shop.wsgi.application"
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('DB_NAME'),
-        'USER': os.getenv('DB_USER'),
-        'PASSWORD': os.getenv('DB_PASSWORD'),
-        'HOST': os.getenv('DB_HOST'),
-        'PORT': getenv_int('DB_PORT', 5432),
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+if DATABASE_URL:
+    DATABASES = {
+        "default": dj_database_url.parse(
+            DATABASE_URL,
+            conn_max_age=600,
+            ssl_require=True,
+        )
     }
-}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": os.getenv("DB_NAME"),
+            "USER": os.getenv("DB_USER"),
+            "PASSWORD": os.getenv("DB_PASSWORD"),
+            "HOST": os.getenv("DB_HOST"),
+            "PORT": getenv_int("DB_PORT", 5432),
+        }
+    }
 
 AUTH_PASSWORD_VALIDATORS = [
     {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-        'OPTIONS': {
-            'min_length': 8,
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+        "OPTIONS": {
+            "min_length": 8,
         },
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
     {
-        'NAME': 'users.validators.RegexPasswordValidator',
+        "NAME": "users.validators.RegexPasswordValidator",
     },
 ]
 
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = "UTC"
 
 USE_I18N = True
 
 USE_TZ = True
 
 
-STATIC_URL = '/static/'
+STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "static"
 
 MEDIA_ROOT = BASE_DIR / "media"
-MEDIA_URL = 'media/'
+MEDIA_URL = "media/"
 STORAGES = {
     "default": {
         "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
     },
     "staticfiles": {
-        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        "BACKEND": "addons.storage.TolerantStaticFilesStorage",
     },
 }
 
 REST_FRAMEWORK = {
-    'DATE_FORMAT': '%d/%m/%Y',
-    'DATE_INPUT_FORMATS': ['%d/%m/%Y'],
-    'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.AllowAny',
+    "DATE_FORMAT": "%d/%m/%Y",
+    "DATE_INPUT_FORMATS": ["%d/%m/%Y"],
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.AllowAny",
     ],
-    'PAGE_SIZE': 15,
-    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
-    'DEFAULT_RENDERER_CLASSES': [
-        'rest_framework.renderers.JSONRenderer',
-        'rest_framework.renderers.BrowsableAPIRenderer',
+    "PAGE_SIZE": 15,
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "DEFAULT_RENDERER_CLASSES": [
+        "rest_framework.renderers.JSONRenderer",
+        "rest_framework.renderers.BrowsableAPIRenderer",
     ],
-    'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
     ],
-    'DEFAULT_THROTTLE_CLASSES': [
-        'rest_framework.throttling.AnonRateThrottle',
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.AnonRateThrottle",
     ],
-    'DEFAULT_THROTTLE_RATES': {
-        'refresh_limit': '10/minute',
-        'anon': '5/minute',
+    "DEFAULT_THROTTLE_RATES": {
+        "refresh_limit": "10/minute",
+        "anon": "5/minute",
     },
 }
 
@@ -250,19 +274,19 @@ CACHES = {
     }
 }
 
-SUPER_LOGIN = os.getenv('SUPER_LOGIN')
-SUPER_PASSWORD = os.getenv('SUPER_PASSWORD')
+SUPER_LOGIN = os.getenv("SUPER_LOGIN")
+SUPER_PASSWORD = os.getenv("SUPER_PASSWORD")
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 EMAIL_BACKEND = "anymail.backends.brevo.EmailBackend"
 
 ANYMAIL = {"BREVO_API_KEY": os.getenv("BREVO_API_KEY"), "REQUESTS_TIMEOUT": 10}
 
 
-DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@example.com')
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "noreply@example.com")
 
-ALGORITHM = os.getenv('ALGORITHM', 'HS256')
+ALGORITHM = os.getenv("ALGORITHM", "HS256")
 
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
@@ -300,15 +324,43 @@ SIMPLE_JWT = {
 MAX_PASSWORD_RESET_ATTEMPTS = int(os.getenv("MAX_PASSWORD_RESET_ATTEMPTS", 3))
 MAX_REFRESH_ATTEMPTS = int(os.getenv("MAX_REFRESH_ATTEMPTS", 5))
 
-PASSWORD_RESET_TIMEOUT = (
-    int(os.getenv("PASSWORD_RESET_TIMEOUT_HR", 24)) * 60 * 60
-)
+PASSWORD_RESET_TIMEOUT = int(os.getenv("PASSWORD_RESET_TIMEOUT_HR", 24)) * 60 * 60
 REFRESH_TOKEN_TIMEOUT = int(os.getenv("REFRESH_TOKEN_TIMEOUT", 24)) * 60 * 60
 
+DJANGO_LOG_LEVEL = os.getenv("DJANGO_LOG_LEVEL", "INFO")
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "[{levelname}] {asctime} {name} — {message}",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": DJANGO_LOG_LEVEL,
+    },
+    "loggers": {
+        "django.request": {
+            "handlers": ["console"],
+            "level": "ERROR",
+            "propagate": False,
+        },
+    },
+}
+
 if DEBUG:
-    INSTALLED_APPS.append('debug_toolbar')
-    MIDDLEWARE.insert(3, 'debug_toolbar.middleware.DebugToolbarMiddleware')
+    INSTALLED_APPS.append("debug_toolbar")
+    MIDDLEWARE.insert(3, "debug_toolbar.middleware.DebugToolbarMiddleware")
 
     DEBUG_TOOLBAR_CONFIG = {
-        'SHOW_TOOLBAR_CALLBACK': lambda request: False,
+        "SHOW_TOOLBAR_CALLBACK": lambda request: False,
     }

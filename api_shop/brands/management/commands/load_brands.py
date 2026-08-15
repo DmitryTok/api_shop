@@ -1,9 +1,8 @@
+from addons.slugify import generate_unique_slug
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
-from addons.slugify import generate_unique_slug
 from brands.models import Brand
-
 
 BRANDS = [
     "Nike",
@@ -41,6 +40,4 @@ class Command(BaseCommand):
                 unique_fields=["name"],
             )
 
-        self.stdout.write(
-            self.style.SUCCESS("Brands loaded successfully")
-        )
+        self.stdout.write(self.style.SUCCESS("Brands loaded successfully"))

@@ -5,6 +5,7 @@ requires-python = ">=3.12"
 dependencies = [
     "celery>=5.6.2",
     "cloudinary>=1.45.0",
+    "dj-database-url>=3.1.2",
     "django>=5.2.11",
     "django-anymail>=15.0",
     "django-celery-beat>=2.8.1",
@@ -26,3 +27,86 @@ dependencies = [
     "uvicorn>=0.48.0",
     "whitenoise>=6.12.0",
 ]
+
+[dependency-groups]
+dev = [
+    "pre-commit>=4.6.2",
+    "pytest>=9.1.1",
+    "pytest-cov>=7.1.0",
+    "pytest-django>=4.14.0",
+    "ruff>=0.15.22",
+]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 88
+extend-exclude = [
+    "*/migrations/*",
+]
+
+
+#### **1. Linter Rules Configuration**
+#Configure the linter to explicitly enable, enforce, and auto-fix the following rule categories:
+#* **E4 (Imports & Code Structure):** Catch issues related to bad import placement, multiple imports on one line, and structural violations.
+#* **E7 (Python Expressions & Statements):** Ensure clean pythonic syntax (e.g., using `is None` instead of `== None`, proper lambda assignments, type comparisons).
+#* **E9 (Runtime & Syntax Errors):** Prevent critical issues like invalid syntax, indentation errors, or unclosed brackets from passing checks.
+#* **F (Pyflakes Checks):** Identify unused imports, undefined variables, dead code, and duplicate dictionary keys.
+#* **I (Import Sorting - isort style):** Automatically sort imports alphabetically and group them logically (standard library, third-party, local modules).
+
+[tool.ruff.lint]
+select = [
+    "E4",
+    "E7",
+    "E9",
+    "F",
+    "I",
+]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "api_shop.settings"
+pythonpath = [
+    "api_shop",
+]
+testpaths = [
+    "api_shop",
+]
+python_files = [
+    "tests.py",
+    "test_*.py",
+    "*_tests.py",
+]
+addopts = [
+    "--strict-config",
+    "--strict-markers",
+]
+
+[tool.coverage.run]
+branch = true
+source = [
+    "api_shop",
+]
+relative_files = true
+omit = [
+    "*/admin.py",
+    "*/apps.py",
+    "*/migrations/*",
+    "*/settings.py",
+    "*/settings/*",
+    "*/tests.py",
+    "*/tests/*",
+    "*/wsgi.py",
+    "*/asgi.py",
+    "*/__init__.py",
+    "api_shop/manage.py",
+]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+precision = 2

@@ -3,7 +3,6 @@ from rest_framework.routers import DefaultRouter
 
 from .views import CartItemViewSet, ShoppingCartViewSet
 
-
 router = DefaultRouter()
 router.register(
     "cart",

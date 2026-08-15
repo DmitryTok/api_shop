@@ -9,18 +9,14 @@ class RegexPasswordValidator:
 
         if len(password) < 8:
             raise ValidationError(
-                _(
-                    "This password is too short. It must contain at least 8 characters."
-                ),
-                code='password_too_short',
+                _("This password is too short. It must contain at least 8 characters."),
+                code="password_too_short",
             )
 
         if len(password) > 128:
             raise ValidationError(
-                _(
-                    "This password is too long. It must not exceed 128 characters."
-                ),
-                code='password_too_long',
+                _("This password is too long. It must not exceed 128 characters."),
+                code="password_too_long",
             )
 
         if not re.fullmatch(r'[A-Za-z0-9!@#$%^&*(),.?":{}|<>]*', password):
@@ -28,29 +24,25 @@ class RegexPasswordValidator:
                 _(
                     "Password must contain only Latin letters, numbers, and standard symbols."
                 ),
-                code='password_invalid_characters',
+                code="password_invalid_characters",
             )
 
-        if not re.search(r'[A-Z]', password):
+        if not re.search(r"[A-Z]", password):
             raise ValidationError(
-                _(
-                    "This password must contain at least one uppercase letter (A-Z)."
-                ),
-                code='password_no_upper',
+                _("This password must contain at least one uppercase letter (A-Z)."),
+                code="password_no_upper",
             )
 
-        if not re.search(r'[a-z]', password):
+        if not re.search(r"[a-z]", password):
             raise ValidationError(
-                _(
-                    "This password must contain at least one lowercase letter (a-z)."
-                ),
-                code='password_no_lower',
+                _("This password must contain at least one lowercase letter (a-z)."),
+                code="password_no_lower",
             )
 
-        if not re.search(r'\d', password):
+        if not re.search(r"\d", password):
             raise ValidationError(
                 _("This password must contain at least one digit."),
-                code='password_no_digit',
+                code="password_no_digit",
             )
 
         if not re.search(r'[!@#$%^&*(),.?":{}|<>]', password):
@@ -58,7 +50,7 @@ class RegexPasswordValidator:
                 _(
                     "This password must contain at least one special character (!@#$%^&*...)."
                 ),
-                code='password_no_symbol',
+                code="password_no_symbol",
             )
 
     def get_help_text(self):

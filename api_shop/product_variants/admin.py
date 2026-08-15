@@ -1,5 +1,4 @@
 from django.contrib import admin
-
 from product_images.models import ProductImage
 
 from .models import ProductVariant

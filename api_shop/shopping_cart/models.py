@@ -1,7 +1,6 @@
+from addons.mixins import TimeStampMixin
 from django.conf import settings
 from django.db import models
-
-from addons.mixins import TimeStampMixin
 from product_variants.models import ProductVariant
 
 
@@ -14,8 +13,8 @@ class ShoppingCart(TimeStampMixin):
 
     def __str__(self):
         return f"Shopping cart of {self.user.email}"
-    
-    
+
+
 class CartItem(TimeStampMixin):
     cart = models.ForeignKey(
         ShoppingCart,
@@ -34,8 +33,7 @@ class CartItem(TimeStampMixin):
     )
 
     def __str__(self):
-        return f"{self.product_variant.sku} x {self.quantity}"  
-
+        return f"{self.product_variant.sku} x {self.quantity}"
 
     class Meta:
         constraints = [
@@ -44,4 +42,3 @@ class CartItem(TimeStampMixin):
                 name="unique_cart_product_variant",
             )
         ]
-          

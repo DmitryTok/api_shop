@@ -1,7 +1,8 @@
 from addons.slugify import generate_unique_slug
-from categories.models import Category, Subcategory
 from django.core.management.base import BaseCommand
 from django.db import transaction
+
+from categories.models import Category, Subcategory
 
 CATEGORIES = {
     "Clothing": [
@@ -89,7 +90,5 @@ class Command(BaseCommand):
             )
 
         self.stdout.write(
-            self.style.SUCCESS(
-                "Categories and subcategories loaded successfully"
-            )
+            self.style.SUCCESS("Categories and subcategories loaded successfully")
         )

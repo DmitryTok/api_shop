@@ -1,6 +1,5 @@
-from django.db import models
-
 from addons.mixins import TimeStampMixin
+from django.db import models
 from product_variants.models import ProductVariant
 
 
@@ -27,5 +26,5 @@ class Currency(TimeStampMixin):
         ordering = ["-created_at"]
 
         indexes = [
-             models.Index(fields=["amount"]),
+            models.Index(fields=["amount"]),
         ]

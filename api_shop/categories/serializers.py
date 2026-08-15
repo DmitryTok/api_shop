@@ -1,7 +1,7 @@
+from addons.slugify import generate_unique_slug
 from rest_framework import serializers
 
 from .models import Category, Subcategory
-from addons.slugify import generate_unique_slug
 
 
 class CategorySerializer(serializers.ModelSerializer):

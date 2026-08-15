@@ -11,6 +11,7 @@ from rest_framework.response import Response
 from rest_framework.throttling import AnonRateThrottle
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenRefreshView
+
 from users.serializers import (
     ActivationCodeSerializer,
     CustomTokenObtainPairSerializer,
@@ -20,7 +21,7 @@ from users.serializers import (
     PasswordResetConfirmSerializer,
     PasswordResetRequestSerializer,
     ResendActivationCodeSerializer,
-    UserRegisterSerializer
+    UserRegisterSerializer,
 )
 from users.services.email import send_email_code
 from users.trottling import RefreshScopedThrottle
@@ -84,7 +85,7 @@ class ActivateUserView(APIView):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        code = serializer.validated_data['code'].strip()
+        code = serializer.validated_data["code"].strip()
 
         user_id = cache.get(f"activation:{code}:user_id")
 
@@ -130,7 +131,7 @@ class ResendActivationCodeView(APIView):
 
         try:
             user = User.objects.get(
-                email=serializer.validated_data['email'].lower().strip()
+                email=serializer.validated_data["email"].lower().strip()
             )
         except User.DoesNotExist:
             return Response(
@@ -179,7 +180,7 @@ class PasswordResetRequestView(APIView):
 
         try:
             user = User.objects.get(
-                email=serializer.validated_data['email'].lower().strip()
+                email=serializer.validated_data["email"].lower().strip()
             )
         except User.DoesNotExist:
             return Response(
@@ -216,9 +217,9 @@ class PasswordResetConfirmView(APIView):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        user = serializer.validated_data['user']
-        redis_key = serializer.validated_data['redis_key']
-        new_password = serializer.validated_data['new_password']
+        user = serializer.validated_data["user"]
+        redis_key = serializer.validated_data["redis_key"]
+        new_password = serializer.validated_data["new_password"]
 
         user.set_password(new_password)
         user.save()

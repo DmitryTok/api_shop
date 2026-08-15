@@ -1,0 +1,87 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [dev, prod]
+  push:
+    branches: [dev, prod]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v10
+        with:
+          version: "0.12.0"
+          enable-cache: true
+
+      - run: uv sync --group dev
+
+      - name: Run pre-commit
+        run: SKIP=no-commit-to-branch uv run pre-commit run --all-files
+
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: api_shop_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      APP_ENV: local
+      DEBUG: "false"
+      SECRET: ci-test-secret-key-not-for-production-use
+      ALLOWED_HOSTS: localhost,127.0.0.1
+      DB_NAME: api_shop_test
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_HOST: localhost
+      DB_PORT: 5432
+      REDIS_URL: redis://localhost:6379/1
+      CELERY_BROKER_URL: redis://localhost:6379/0
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v10
+        with:
+          version: "0.12.0"
+          enable-cache: true
+
+      - run: uv sync --group dev
+      - run: uv run pytest
+
+  deploy-staging:
+    needs: [lint, test]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
+    steps:
+      - name: Trigger Render deploy (staging)
+        env:
+          RENDER_DEPLOY_HOOK_STAGING_URL: ${{ secrets.RENDER_DEPLOY_HOOK_STAGING_URL }}
+        run: curl -fsS -X POST "$RENDER_DEPLOY_HOOK_STAGING_URL"

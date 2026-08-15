@@ -17,7 +17,7 @@ def gen_code(user_id: int, task_type: str):
         cache.delete(f"{task_type}:{old_code}:user_id")
         cache.delete(user_old_code_key)
 
-    new_code = get_random_string(length=6, allowed_chars='0123456789')
+    new_code = get_random_string(length=6, allowed_chars="0123456789")
 
     cache.set(f"{task_type}:{new_code}:user_id", user_id, timeout=code_timeout)
     cache.set(user_old_code_key, new_code, timeout=code_timeout)

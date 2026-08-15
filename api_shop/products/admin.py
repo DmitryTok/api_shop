@@ -1,7 +1,8 @@
 from django.contrib import admin
+from product_variants.models import ProductVariant
 
 from .models import Product
-from product_variants.models import ProductVariant
+
 
 class ProductVariantInline(admin.TabularInline):
     model = ProductVariant

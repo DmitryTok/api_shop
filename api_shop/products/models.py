@@ -1,8 +1,7 @@
-from django.db import models
-
 from addons.mixins import TimeStampMixin
 from brands.models import Brand
 from categories.models import Subcategory
+from django.db import models
 
 
 class Product(TimeStampMixin):
@@ -36,10 +35,7 @@ class Product(TimeStampMixin):
         verbose_name_plural = "Products"
         ordering = ["-created_at"]
 
-
         indexes = [
             models.Index(fields=["subcategory"]),
             models.Index(fields=["brand", "subcategory"]),
         ]
-
-

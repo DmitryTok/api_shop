@@ -15,4 +15,4 @@ class ProductSerializer(serializers.ModelSerializer):
             "subcategory",
             "is_active",
             "is_hidden",
-        ) 
+        )

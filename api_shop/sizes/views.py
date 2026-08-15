@@ -12,4 +12,3 @@ class SizeListAPIView(ListAPIView):
 class SizeRetrieveAPIView(RetrieveAPIView):
     queryset = Size.objects.all()
     serializer_class = SizeSerializer
-

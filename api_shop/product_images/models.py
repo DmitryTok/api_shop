@@ -1,6 +1,5 @@
-from django.db import models
-
 from addons.mixins import TimeStampMixin
+from django.db import models
 from product_variants.models import ProductVariant
 
 from .utils import product_image_upload_path
@@ -39,10 +38,8 @@ class ProductImage(TimeStampMixin):
 
         constraints = [
             models.UniqueConstraint(
-            fields=["product_variant"],
-            condition=models.Q(is_main=True),
-            name="unique_main_image_per_product_variant",
+                fields=["product_variant"],
+                condition=models.Q(is_main=True),
+                name="unique_main_image_per_product_variant",
             ),
         ]
-
-

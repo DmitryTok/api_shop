@@ -9,26 +9,15 @@ class CartItemSerializer(serializers.ModelSerializer):
         quantity = attrs.get("quantity", 1)
 
         if self.instance:
-            product_variant = (
-                product_variant or self.instance.product_variant
-            )
-            quantity = (
-                quantity
-                if quantity is not None
-                else self.instance.quantity
-            )
+            product_variant = product_variant or self.instance.product_variant
+            quantity = quantity if quantity is not None else self.instance.quantity
 
         if quantity < 0:
-            raise serializers.ValidationError(
-                {"error": "Quantity cannot be negative."}
-            )
+            raise serializers.ValidationError({"error": "Quantity cannot be negative."})
 
         if quantity > product_variant.stock:
             raise serializers.ValidationError(
-                {
-                    "error":
-                    "Quantity cannot exceed available stock."
-                }
+                {"error": "Quantity cannot exceed available stock."}
             )
 
         return attrs
