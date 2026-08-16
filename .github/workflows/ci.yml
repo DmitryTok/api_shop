@@ -81,7 +81,30 @@ jobs:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
     steps:
+      - uses: actions/checkout@v4
+
       - name: Trigger Render deploy (staging)
         env:
           RENDER_DEPLOY_HOOK_STAGING_URL: ${{ secrets.RENDER_DEPLOY_HOOK_STAGING_URL }}
         run: curl -fsS -X POST "$RENDER_DEPLOY_HOOK_STAGING_URL"
+
+      - name: Wait for staging to come back healthy
+        env:
+          STAGING_URL: ${{ vars.STAGING_BASE_URL }}
+        run: |
+          echo "Polling $STAGING_URL/health/ ..."
+          for attempt in $(seq 1 20); do
+            if curl -fsS -o /dev/null "$STAGING_URL/health/"; then
+              echo "Staging is healthy (attempt $attempt)."
+              exit 0
+            fi
+            echo "Not ready yet (attempt $attempt/20), retrying in 15s..."
+            sleep 15
+          done
+          echo "Staging did not become healthy within 5 minutes."
+          exit 1
+
+      - name: Run smoke tests against staging
+        env:
+          STAGING_URL: ${{ vars.STAGING_BASE_URL }}
+        run: ./scripts/smoke_test.sh "$STAGING_URL"
