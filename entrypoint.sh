@@ -10,4 +10,4 @@ python api_shop/manage.py migrate
 
 echo "--> Starting Gunicorn..."
 
-exec /opt/venv/bin/gunicorn --bind 0.0.0.0:"${PORT:-8000}" --workers 3 --chdir /app/api_shop api_shop.wsgi:application
+exec /opt/venv/bin/gunicorn --bind 0.0.0.0:"${PORT:-8000}" --workers 3 --access-logfile - --chdir /app/api_shop api_shop.wsgi:application
