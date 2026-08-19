@@ -1,10 +1,11 @@
 from django.contrib import admin
 
+from api_shop.admin import CustomModelAdmin
 from .models import Favorite
 
 
 @admin.register(Favorite)
-class FavoriteAdmin(admin.ModelAdmin):
+class FavoriteAdmin(CustomModelAdmin):
     list_display = (
         "id",
         "user",

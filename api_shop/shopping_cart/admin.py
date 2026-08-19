@@ -1,5 +1,6 @@
 from django.contrib import admin
 
+from api_shop.admin import CustomModelAdmin
 from shopping_cart.models import CartItem, ShoppingCart
 
 
@@ -9,14 +10,14 @@ class CartItemInline(admin.TabularInline):
 
 
 @admin.register(ShoppingCart)
-class ShoppingCartAdmin(admin.ModelAdmin):
+class ShoppingCartAdmin(CustomModelAdmin):
     list_display = ("id", "user", "created_at", "updated_at")
     search_fields = ("user__email",)
     inlines = (CartItemInline,)
 
 
 @admin.register(CartItem)
-class CartItemAdmin(admin.ModelAdmin):
+class CartItemAdmin(CustomModelAdmin):
     list_display = (
         "id",
         "cart",
