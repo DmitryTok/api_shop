@@ -4,39 +4,10 @@ import json
 
 from django.contrib import admin
 
+from custom_admin import convert_fields
+
+
 register = template.Library()
-
-
-MODEL_AND_PYTHON_TYPES_DICT = {
-    "CharField": "str",
-    "TextField": "str",
-    "SlugField": "str",
-    "EmailField": "str",
-    "URLField": "str",
-    "UUIDField": "uuid.UUID",
-    "GenericIPAddressField": "str",
-    "FilePathField": "str",
-    "IntegerField": "int",
-    "SmallIntegerField": "int",
-    "BigIntegerField": "int",
-    "PositiveIntegerField": "int",
-    "PositiveSmallIntegerField": "int",
-    "PositiveBigIntegerField": "int",
-    "FloatField": "float",
-    "DecimalField": "decimal.Decimal",
-    "BooleanField": "bool",
-    "DateField": "datetime.date",
-    "DateTimeField": "datetime.datetime",
-    "TimeField": "datetime.time",
-    "DurationField": "datetime.timedelta",
-    "FileField": "str",
-    "ImageField": "str",
-    "JSONField": "dict",
-    "BinaryField": "bytes",
-    "ForeignKey": "int",
-    "OneToOneField": "int",
-    "ManyToManyField": "list[int]",
-}
 
 
 @register.simple_tag
@@ -50,7 +21,7 @@ def generate_example_json(app_label: str, model_name: str) -> str:
         admin_fields = None
     model_fields = model_class._meta.concrete_fields
     many_to_many_fields = model_class._meta.many_to_many
-    invalid_fields = ("id", "created_at", "updated_at")
+    invalid_fields = ("id", "created_at", "updated_at", "groups", "user_permissions")
     fields_dict = {}
     if admin_fields:
         for field_name in admin_fields:
@@ -62,15 +33,23 @@ def generate_example_json(app_label: str, model_name: str) -> str:
                 return f"Error: {e}, during creating admin fields for model"
             if field.name in invalid_fields:
                 continue
-            fields_dict[field.name] = MODEL_AND_PYTHON_TYPES_DICT.get(field.get_internal_type(), None)
+            class_converter = getattr(convert_fields, f"{field.get_internal_type()}Converter")
+            simple_field = class_converter()
+            fields_dict[field.name] = simple_field.get_field_type(django_field=field)
     else:
         for field in model_fields:
             if field.name in invalid_fields:
                 continue
-            fields_dict[field.name] = MODEL_AND_PYTHON_TYPES_DICT.get(field.get_internal_type(), None)
+            class_converter = getattr(convert_fields, f"{field.get_internal_type()}Converter")
+            simple_field = class_converter()
+            fields_dict[field.name] = simple_field.get_field_type(django_field=field)
 
         for many_to_many_field in many_to_many_fields:
-            fields_dict[many_to_many_field.name] = MODEL_AND_PYTHON_TYPES_DICT.get(field.get_internal_type(), None)
+            if many_to_many_field.name in invalid_fields:
+                continue
+            class_converter = getattr(convert_fields, f"{many_to_many_field.get_internal_type()}Converter")
+            simple_field = class_converter()
+            fields_dict[many_to_many_field.name] = simple_field.get_field_type(django_field=many_to_many_field)
     example_json = [
         {
             "model": f"{app_label}.{model_name}",
