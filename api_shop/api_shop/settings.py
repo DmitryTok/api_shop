@@ -279,9 +279,9 @@ SUPER_PASSWORD = os.getenv("SUPER_PASSWORD")
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-EMAIL_BACKEND = "anymail.backends.brevo.EmailBackend"
+EMAIL_BACKEND = "anymail.backends.resend.EmailBackend"
 
-ANYMAIL = {"BREVO_API_KEY": os.getenv("BREVO_API_KEY"), "REQUESTS_TIMEOUT": 10}
+ANYMAIL = {"RESEND_API_KEY": os.getenv("RESEND_API_KEY"), "REQUESTS_TIMEOUT": 10}
 
 
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "noreply@example.com")
