@@ -2,9 +2,9 @@ name: CI
 
 on:
   pull_request:
-    branches: [dev, prod]
+    branches: [dev, main]
   push:
-    branches: [dev, prod]
+    branches: [dev, main]
 
 jobs:
   lint:
@@ -108,3 +108,36 @@ jobs:
         env:
           STAGING_URL: ${{ vars.STAGING_BASE_URL }}
         run: ./scripts/smoke_test.sh "$STAGING_URL"
+
+  deploy-production:
+    needs: [lint, test]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Trigger Render deploy (production)
+        env:
+          RENDER_DEPLOY_HOOK_PRODUCTION_URL: ${{ secrets.RENDER_DEPLOY_HOOK_PRODUCTION_URL }}
+        run: curl -fsS -X POST "$RENDER_DEPLOY_HOOK_PRODUCTION_URL"
+
+      - name: Wait for production to come back healthy
+        env:
+          PRODUCTION_URL: ${{ vars.PRODUCTION_BASE_URL }}
+        run: |
+          echo "Polling $PRODUCTION_URL/health/ ..."
+          for attempt in $(seq 1 20); do
+            if curl -fsS -o /dev/null "$PRODUCTION_URL/health/"; then
+              echo "Production is healthy (attempt $attempt)."
+              exit 0
+            fi
+            echo "Not ready yet (attempt $attempt/20), retrying in 15s..."
+            sleep 15
+          done
+          echo "Production did not become healthy within 5 minutes."
+          exit 1
+
+      - name: Run smoke tests against production
+        env:
+          PRODUCTION_URL: ${{ vars.PRODUCTION_BASE_URL }}
+        run: ./scripts/smoke_test.sh "$PRODUCTION_URL"
