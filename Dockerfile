@@ -1,4 +1,4 @@
-FROM python:3.12.13-slim-bookworm AS builder
+FROM python:3.14.7-slim-bookworm AS builder
 
 COPY --from=ghcr.io/astral-sh/uv:0.12.0 /uv /uvx /bin/
 
@@ -17,7 +17,7 @@ COPY pyproject.toml uv.lock ./
 
 RUN uv sync --locked --no-dev --no-install-project --no-cache
 
-FROM python:3.12.13-slim-bookworm AS runtime
+FROM python:3.14.7-slim-bookworm AS runtime
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends curl && \
