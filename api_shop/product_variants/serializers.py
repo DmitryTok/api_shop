@@ -13,6 +13,7 @@ class ProductVariantSerializer(serializers.ModelSerializer):
             "color",
             "sku",
             "stock",
+            "price",
             "gender",
             "is_active",
         )
