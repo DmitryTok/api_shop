@@ -39,6 +39,13 @@ class ProductVariant(TimeStampMixin):
         default=0,
     )
 
+    price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+    )
+
     gender = models.CharField(
         max_length=10,
         choices=Gender.choices,
