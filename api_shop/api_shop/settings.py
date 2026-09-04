@@ -281,7 +281,10 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 EMAIL_BACKEND = "anymail.backends.resend.EmailBackend"
 
-ANYMAIL = {"RESEND_API_KEY": os.getenv("RESEND_API_KEY"), "REQUESTS_TIMEOUT": 10}
+ANYMAIL = {
+    "RESEND_API_KEY": os.getenv("RESEND_API_KEY"),
+    "REQUESTS_TIMEOUT": 10,
+}
 
 
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "noreply@example.com")
@@ -362,5 +365,5 @@ if DEBUG:
     MIDDLEWARE.insert(3, "debug_toolbar.middleware.DebugToolbarMiddleware")
 
     DEBUG_TOOLBAR_CONFIG = {
-        "SHOW_TOOLBAR_CALLBACK": lambda request: False,
+        "SHOW_TOOLBAR_CALLBACK": lambda request: True,
     }
