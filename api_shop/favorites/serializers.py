@@ -1,3 +1,6 @@
+from product_variants.serializers import (
+    ProductVariantForFavoriteSerializer,
+)
 from rest_framework import serializers
 
 from .models import Favorite
@@ -32,3 +35,17 @@ class FavoriteSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         )
+
+
+class FavoriteUserSerializer(serializers.ModelSerializer):
+    product_variant = ProductVariantForFavoriteSerializer(read_only=True)
+
+    class Meta:
+        model = Favorite
+        fields = (
+            "id",
+            "product_variant",
+            "created_at",
+            "updated_at",
+        )
+        read_only_fields = fields
