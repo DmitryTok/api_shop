@@ -26,6 +26,7 @@ class FavoriteUserListAPIView(ListAPIView):
         return (
             Favorite.objects.filter(user=self.request.user)
             .select_related(
+                "product_variant__product",
                 "product_variant__size",
                 "product_variant__color",
             )

@@ -25,6 +25,7 @@ class ProductVariantSerializer(serializers.ModelSerializer):
 
 
 class ProductVariantForFavoriteSerializer(serializers.ModelSerializer):
+    product_title = serializers.CharField(source="product.name", read_only=True)
     size = SizeSerializer(read_only=True)
     color = ColorSerializer(read_only=True)
     images = ProductImagesForFavoriteSerializer(many=True, read_only=True)
@@ -33,6 +34,7 @@ class ProductVariantForFavoriteSerializer(serializers.ModelSerializer):
         model = ProductVariant
         fields = (
             "id",
+            "product_title",
             "images",
             "size",
             "color",
