@@ -1,11 +1,15 @@
+import os
 import random
+import time
 
+import psutil
 from brands.models import Brand
 from categories.models import Category, Subcategory
 from colors.models import Color
 from currencies.models import Currency
 from discounts.models import Discount
 from faker import Faker
+from product_variants.models import Gender, ProductVariant
 from products.models import Product
 from sizes.models import Size
 
@@ -132,17 +136,37 @@ class DataLoader:
         self.discounts_set: dict[str, Discount] = {}
         self.sizes_set: dict[str, Size] = {}
         self.products_set: dict[str, Product] = {}
+        self.products_variants_set: dict[str, ProductVariant] = {}
 
     def _write(self, message: str):
         if self.stdout and self.style:
             self.stdout.write(self.style.SUCCESS(message))
 
     def run_all(self):
+
+        process = psutil.Process(os.getpid())
+        start_time = time.perf_counter()
+        psutil.cpu_percent(interval=None)
+
+        self._write("🚀 Starting data loading...")
+
         self._upload_brands()
         self._upload_categories()
         self._upload_colors()
         self._upload_sizes()
         self._upload_products()
+        self._upload_product_variants()
+
+        elapsed_time = time.perf_counter() - start_time
+        cpu_usage = psutil.cpu_percent(interval=None)
+
+        ram_mb = process.memory_info().rss / (1024 * 1024)
+
+        self._write("\n" + "=" * 40)
+        self._write(f"⏱️ Час виконання: {elapsed_time:.2f} сек")
+        self._write(f"💻 Завантаження CPU (Python): {cpu_usage:.1f}%")
+        self._write(f"🧠 Використання RAM (Python): {ram_mb:.2f} MB")
+        self._write("=" * 40)
 
     def _upload_brands(self):
 
@@ -241,15 +265,15 @@ class DataLoader:
         Product.objects.bulk_create(
             (
                 Product(
-                    name=FAKE.catch_phrase().title(),
-                    slug=generate_unique_slug(Product, FAKE.catch_phrase()),
+                    name=f"Product {elem}",
+                    slug=generate_unique_slug(Product, f"Product {elem}"),
                     description=FAKE.text(),
                     brand=random.choice(list(self.brands_set.values())),
                     subcategory=random.choice(list(self.subcategories_set.values())),
                     is_active=True,
                     is_hidden=False,
                 )
-                for i in range(1, 101)
+                for item, elem in enumerate(range(1, 300))
             ),
             ignore_conflicts=True,
         )
@@ -259,3 +283,31 @@ class DataLoader:
             for product in Product.objects.select_related("brand", "subcategory").all()
         }
         self._write(f"Products {len(self.products_set)} loaded successfully")
+
+    def _upload_product_variants(self):
+        ProductVariant.objects.bulk_create(
+            (
+                ProductVariant(
+                    product=random.choice(list(self.products_set.values())),
+                    size=random.choice(list(self.sizes_set.values())),
+                    color=random.choice(list(self.colors_set.values())),
+                    sku=f"SKU-Product-{elem}-{random.randint(10000, 99999)}",
+                    stock=random.randint(0, 300),
+                    price=round(random.uniform(10.0, 500.0), 2),
+                    gender=random.choice([item for item in Gender.values]),
+                    is_active=True,
+                )
+                for item, elem in enumerate(range(1, 2000))
+            ),
+            ignore_conflicts=True,
+        )
+
+        self.products_variants_set = {
+            product_variant.sku: product_variant
+            for product_variant in ProductVariant.objects.select_related(
+                "product", "size", "color"
+            ).all()
+        }
+        self._write(
+            f"Product Variants {len(self.products_variants_set)} loaded successfully"
+        )
