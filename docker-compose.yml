@@ -31,6 +31,7 @@ services:
       python api_shop/manage.py load_terms &&
       python api_shop/manage.py load_users &&
       python api_shop/manage.py create_default_superuser &&
+      python api_shop/manage.py load_data &&
       python api_shop/manage.py runserver 0.0.0.0:8000
       "
 

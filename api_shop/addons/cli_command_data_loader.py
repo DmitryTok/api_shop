@@ -1,11 +1,17 @@
+import random
+
 from brands.models import Brand
 from categories.models import Category, Subcategory
 from colors.models import Color
 from currencies.models import Currency
 from discounts.models import Discount
+from faker import Faker
+from products.models import Product
 from sizes.models import Size
 
-from api_shop.addons.slugify import generate_unique_slug
+from addons.slugify import generate_unique_slug
+
+FAKE = Faker()
 
 BRANDS = [
     "Nike",
@@ -59,6 +65,60 @@ CATEGORIES = {
     ],
 }
 
+COLORS = {
+    "Black": "#000000",
+    "Blue": "#0000FF",
+    "Brown": "#A52A2A",
+    "Gray": "#808080",
+    "Green": "#008000",
+    "Navy": "#000080",
+    "Pink": "#FFC0CB",
+    "Red": "#FF0000",
+    "White": "#FFFFFF",
+    "Yellow": "#FFFF00",
+}
+
+SIZES = {
+    "S": "clothing",
+    "M": "clothing",
+    "L": "clothing",
+    "41 EU": "shoes",
+    "42 EU": "shoes",
+    "XS": "clothing",
+    "XL": "clothing",
+    "XXL": "clothing",
+    "39 EU": "shoes",
+    "40 EU": "shoes",
+    "44 EU": "shoes",
+    "US 8": "shoes",
+    "35 EU": "shoes",
+    "36 EU": "shoes",
+    "37 EU": "shoes",
+    "38 EU": "shoes",
+    "45 EU": "shoes",
+    "46 EU": "shoes",
+    "US 7": "shoes",
+    "US 9": "shoes",
+    "US 10": "shoes",
+    "XXS": "clothing",
+    "3XL": "clothing",
+    "EU 34": "clothing",
+    "EU 36": "clothing",
+    "EU 38": "clothing",
+    "EU 40": "clothing",
+    "EU 42": "clothing",
+    "W30/L32": "clothing",
+    "W32/L34": "clothing",
+    "90 cm": "accessories",
+    "100 cm": "accessories",
+    "7.0 (S)": "accessories",
+    "8.0 (L)": "accessories",
+    "56 cm": "accessories",
+    "60 cm": "accessories",
+    "180x30 cm": "accessories",
+    "One Size": "accessories",
+}
+
 
 class DataLoader:
     def __init__(self, stdout=None, style=None):
@@ -71,12 +131,21 @@ class DataLoader:
         self.currencies_set: dict[str, Currency] = {}
         self.discounts_set: dict[str, Discount] = {}
         self.sizes_set: dict[str, Size] = {}
+        self.products_set: dict[str, Product] = {}
 
     def _write(self, message: str):
         if self.stdout and self.style:
             self.stdout.write(self.style.SUCCESS(message))
 
+    def run_all(self):
+        self._upload_brands()
+        self._upload_categories()
+        self._upload_colors()
+        self._upload_sizes()
+        self._upload_products()
+
     def _upload_brands(self):
+
         Brand.objects.bulk_create(
             (
                 Brand(
@@ -127,6 +196,7 @@ class DataLoader:
         )
 
         all_sub_names = [sub for subs in CATEGORIES.values() for sub in subs]
+
         self.subcategories_set = {
             sub.name: sub for sub in Subcategory.objects.filter(name__in=all_sub_names)
         }
@@ -134,14 +204,58 @@ class DataLoader:
         self._write(f"Categories {len(self.categories_set)} loaded successfully")
         self._write(f"Subcategories {len(self.subcategories_set)} loaded successfully")
 
-    def _upload_colors(self, colors_data: list[dict]):
-        pass
+    def _upload_colors(self):
+        Color.objects.bulk_create(
+            (
+                Color(
+                    name=color_name,
+                    hex_code=hex_code,
+                    is_active=True,
+                )
+                for color_name, hex_code in COLORS.items()
+            ),
+            ignore_conflicts=True,
+        )
 
-    def _upload_currencies(self, currencies_data: list[dict]):
-        pass
+        self.colors_set = {color.name: color for color in Color.objects.all()}
 
-    def _upload_discounts(self, discounts_data: list[dict]):
-        pass
+        self._write(f"Colors {len(self.colors_set)} loaded successfully")
 
-    def _upload_sizes(self, sizes_data: list[dict]):
-        pass
+    def _upload_sizes(self):
+        Size.objects.bulk_create(
+            (
+                Size(
+                    name=name,
+                    size_type=size_type,
+                )
+                for name, size_type in SIZES.items()
+            ),
+            ignore_conflicts=True,
+        )
+
+        self.sizes_set = {size.name: size for size in Size.objects.all()}
+
+        self._write(f"Sizes {len(self.sizes_set)} loaded successfully")
+
+    def _upload_products(self):
+        Product.objects.bulk_create(
+            (
+                Product(
+                    name=FAKE.catch_phrase().title(),
+                    slug=generate_unique_slug(Product, FAKE.catch_phrase()),
+                    description=FAKE.text(),
+                    brand=random.choice(list(self.brands_set.values())),
+                    subcategory=random.choice(list(self.subcategories_set.values())),
+                    is_active=True,
+                    is_hidden=False,
+                )
+                for i in range(1, 101)
+            ),
+            ignore_conflicts=True,
+        )
+
+        self.products_set = {
+            product.name: product
+            for product in Product.objects.select_related("brand", "subcategory").all()
+        }
+        self._write(f"Products {len(self.products_set)} loaded successfully")
