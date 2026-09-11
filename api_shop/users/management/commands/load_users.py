@@ -2,6 +2,7 @@ import os
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password
+from django.core.cache import cache
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from dotenv import load_dotenv
@@ -16,9 +17,27 @@ FAKE = Faker()
 
 User = get_user_model()
 
+SEED_LOCK_KEY = "seed:load_users:done"
+
 
 class Command(BaseCommand):
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "--force",
+            action="store_true",
+            help="Re-run even if this command already ran before (creates more fake users).",
+        )
+
     def handle(self, *args, **options):
+        if not options["force"] and cache.get(SEED_LOCK_KEY):
+            self.stdout.write(
+                self.style.WARNING(
+                    "load_users already ran on this environment — skipping to avoid "
+                    "duplicating fake users. Pass --force to reseed anyway."
+                )
+            )
+            return
+
         terms = Term.objects.filter(is_active=True).latest("created_at")
 
         if not terms:
@@ -50,6 +69,8 @@ class Command(BaseCommand):
                     UserTermsAcceptance(user=user, terms=terms)
                     for user in created_users
                 )
+
+            cache.set(SEED_LOCK_KEY, True, timeout=None)
 
             self.stdout.write(
                 self.style.SUCCESS(
