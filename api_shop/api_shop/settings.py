@@ -66,8 +66,7 @@ DEBUG = getenv_bool("DEBUG", default=False)
 if APP_ENV in {"staging", "production"} and DEBUG:
     raise ImproperlyConfigured(f"DEBUG must be false when APP_ENV={APP_ENV}")
 
-# ALLOWED_HOSTS = getenv_list("ALLOWED_HOSTS")
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = getenv_list("ALLOWED_HOSTS")
 
 if not ALLOWED_HOSTS:
     raise ImproperlyConfigured("ALLOWED_HOSTS environment variable must be set")

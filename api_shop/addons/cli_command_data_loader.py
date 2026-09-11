@@ -1,13 +1,10 @@
-import os
 import random
-import time
 
-import psutil
 from brands.models import Brand
 from categories.models import Category, Subcategory
 from colors.models import Color
-from currencies.models import Currency
 from discounts.models import Discount
+from django.db import transaction
 from faker import Faker
 from product_variants.models import Gender, ProductVariant
 from products.models import Product
@@ -129,25 +126,19 @@ class DataLoader:
         self.stdout = stdout
         self.style = style
 
-        self.brands_set: dict[str, Brand] = {}
-        self.categories_set: dict[str, Category] = {}
-        self.colors_set: dict[str, Color] = {}
-        self.currencies_set: dict[str, Currency] = {}
-        self.discounts_set: dict[str, Discount] = {}
-        self.sizes_set: dict[str, Size] = {}
-        self.products_set: dict[str, Product] = {}
-        self.products_variants_set: dict[str, ProductVariant] = {}
+        self.brands_dct: dict[str, Brand] = {}
+        self.categories_dct: dict[str, Category] = {}
+        self.colors_dct: dict[str, Color] = {}
+        self.sizes_dct: dict[str, Size] = {}
+        self.products_dct: dict[str, Product] = {}
+        self.products_variants_dct: dict[str, ProductVariant] = {}
 
     def _write(self, message: str):
         if self.stdout and self.style:
             self.stdout.write(self.style.SUCCESS(message))
 
+    @transaction.atomic
     def run_all(self):
-
-        process = psutil.Process(os.getpid())
-        start_time = time.perf_counter()
-        psutil.cpu_percent(interval=None)
-
         self._write("🚀 Starting data loading...")
 
         self._upload_brands()
@@ -156,17 +147,7 @@ class DataLoader:
         self._upload_sizes()
         self._upload_products()
         self._upload_product_variants()
-
-        elapsed_time = time.perf_counter() - start_time
-        cpu_usage = psutil.cpu_percent(interval=None)
-
-        ram_mb = process.memory_info().rss / (1024 * 1024)
-
-        self._write("\n" + "=" * 40)
-        self._write(f"⏱️ Час виконання: {elapsed_time:.2f} сек")
-        self._write(f"💻 Завантаження CPU (Python): {cpu_usage:.1f}%")
-        self._write(f"🧠 Використання RAM (Python): {ram_mb:.2f} MB")
-        self._write("=" * 40)
+        self._upload_discounts()
 
     def _upload_brands(self):
 
@@ -181,9 +162,9 @@ class DataLoader:
             ignore_conflicts=True,
         )
 
-        self.brands_set = {brand.name: brand for brand in Brand.objects.all()}
+        self.brands_dct = {brand.name: brand for brand in Brand.objects.all()}
 
-        self._write(f"Brands {len(self.brands_set)} loaded successfully")
+        self._write(f"Brands {len(self.brands_dct)} loaded successfully")
 
     def _upload_categories(self):
         categories_to_create = [
@@ -199,7 +180,7 @@ class DataLoader:
             ignore_conflicts=True,
         )
 
-        self.categories_set = {
+        self.categories_dct = {
             category.name: category
             for category in Category.objects.filter(name__in=CATEGORIES.keys())
         }
@@ -207,7 +188,7 @@ class DataLoader:
         subcategories_to_create = [
             Subcategory(
                 name=subcategory_name,
-                category=self.categories_set[category_name],
+                category=self.categories_dct[category_name],
                 slug=generate_unique_slug(Subcategory, subcategory_name),
             )
             for category_name, subcategory_names in CATEGORIES.items()
@@ -221,12 +202,12 @@ class DataLoader:
 
         all_sub_names = [sub for subs in CATEGORIES.values() for sub in subs]
 
-        self.subcategories_set = {
+        self.subcategories_dct = {
             sub.name: sub for sub in Subcategory.objects.filter(name__in=all_sub_names)
         }
 
-        self._write(f"Categories {len(self.categories_set)} loaded successfully")
-        self._write(f"Subcategories {len(self.subcategories_set)} loaded successfully")
+        self._write(f"Categories {len(self.categories_dct)} loaded successfully")
+        self._write(f"Subcategories {len(self.subcategories_dct)} loaded successfully")
 
     def _upload_colors(self):
         Color.objects.bulk_create(
@@ -241,9 +222,9 @@ class DataLoader:
             ignore_conflicts=True,
         )
 
-        self.colors_set = {color.name: color for color in Color.objects.all()}
+        self.colors_dct = {color.name: color for color in Color.objects.all()}
 
-        self._write(f"Colors {len(self.colors_set)} loaded successfully")
+        self._write(f"Colors {len(self.colors_dct)} loaded successfully")
 
     def _upload_sizes(self):
         Size.objects.bulk_create(
@@ -257,57 +238,77 @@ class DataLoader:
             ignore_conflicts=True,
         )
 
-        self.sizes_set = {size.name: size for size in Size.objects.all()}
+        self.sizes_dct = {size.name: size for size in Size.objects.all()}
 
-        self._write(f"Sizes {len(self.sizes_set)} loaded successfully")
+        self._write(f"Sizes {len(self.sizes_dct)} loaded successfully")
 
     def _upload_products(self):
         Product.objects.bulk_create(
             (
                 Product(
-                    name=f"Product {elem}",
-                    slug=generate_unique_slug(Product, f"Product {elem}"),
+                    name=f"Product {index}",
+                    slug=generate_unique_slug(Product, f"Product {index}"),
                     description=FAKE.text(),
-                    brand=random.choice(list(self.brands_set.values())),
-                    subcategory=random.choice(list(self.subcategories_set.values())),
+                    brand=random.choice(list(self.brands_dct.values())),
+                    subcategory=random.choice(list(self.subcategories_dct.values())),
                     is_active=True,
                     is_hidden=False,
                 )
-                for item, elem in enumerate(range(1, 300))
+                for index in range(1, 301)
             ),
             ignore_conflicts=True,
         )
 
-        self.products_set = {
+        self.products_dct = {
             product.name: product
             for product in Product.objects.select_related("brand", "subcategory").all()
         }
-        self._write(f"Products {len(self.products_set)} loaded successfully")
+        self._write(f"Products {len(self.products_dct)} loaded successfully")
 
     def _upload_product_variants(self):
         ProductVariant.objects.bulk_create(
             (
                 ProductVariant(
-                    product=random.choice(list(self.products_set.values())),
-                    size=random.choice(list(self.sizes_set.values())),
-                    color=random.choice(list(self.colors_set.values())),
-                    sku=f"SKU-Product-{elem}-{random.randint(10000, 99999)}",
+                    product=random.choice(list(self.products_dct.values())),
+                    size=random.choice(list(self.sizes_dct.values())),
+                    color=random.choice(list(self.colors_dct.values())),
+                    sku=f"SKU-Product-{index}-{random.randint(10000, 99999)}",
                     stock=random.randint(0, 300),
                     price=round(random.uniform(10.0, 500.0), 2),
-                    gender=random.choice([item for item in Gender.values]),
+                    gender=random.choice(Gender.values),
                     is_active=True,
                 )
-                for item, elem in enumerate(range(1, 2000))
+                for index in range(1, 2001)
             ),
             ignore_conflicts=True,
         )
 
-        self.products_variants_set = {
+        self.products_variants_dct = {
             product_variant.sku: product_variant
             for product_variant in ProductVariant.objects.select_related(
                 "product", "size", "color"
-            ).all()
+            )
         }
         self._write(
-            f"Product Variants {len(self.products_variants_set)} loaded successfully"
+            f"Product Variants {len(self.products_variants_dct)} loaded successfully"
         )
+
+    def _upload_discounts(self):
+        discounts = Discount.objects.bulk_create(
+            (
+                Discount(
+                    product_variant=random.choice(
+                        list(self.products_variants_dct.values())
+                    ),
+                    discount_type=random.choice(["percentage", "fixed"]),
+                    amount=round(random.uniform(5.0, 90.0), 2),
+                    start_at=FAKE.date_time_this_year(),
+                    end_at=FAKE.date_time_this_year(),
+                    is_active=True,
+                )
+                for _ in range(1, 501)
+            ),
+            ignore_conflicts=True,
+        )
+
+        self._write(f"Discounts {len(discounts)} loaded successfully")
