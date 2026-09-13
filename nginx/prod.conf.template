@@ -22,7 +22,7 @@ server {
     add_header Referrer-Policy "strict-origin-when-cross-origin" always;
 
     location ~ ^/(wp-admin|wp-login\.php|\.env|phpmyadmin|xmlrpc\.php|\.git) {
-        return 444;
+        return 403;
     }
 
     location /static/ {
