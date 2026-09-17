@@ -60,3 +60,12 @@ urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 handler404 = "addons.errorhandlers.handler_404"
+
+
+def trigger_error(request):
+    1 / 0
+
+
+urlpatterns += [
+    path("sentry-debug/", trigger_error),
+]
