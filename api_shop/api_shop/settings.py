@@ -3,51 +3,13 @@ from datetime import timedelta
 from pathlib import Path
 
 import dj_database_url
+from addons.env import getenv_bool, getenv_int, getenv_list
+from addons.sentry import init_sentry
 from django.core.exceptions import ImproperlyConfigured
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR.parent / ".env")
-
-
-def getenv_bool(variable_name: str, default: bool = False) -> bool:
-    raw_value = os.getenv(variable_name)
-
-    if raw_value is None:
-        return default
-
-    value = raw_value.strip().lower()
-
-    if value in {"1", "true", "yes", "on"}:
-        return True
-
-    if value in {"0", "false", "no", "off"}:
-        return False
-
-    raise ImproperlyConfigured(
-        f"{variable_name} must be a boolean value: true or false"
-    )
-
-
-def getenv_int(variable_name: str, default: int | None = None) -> int:
-    raw_value = os.getenv(variable_name)
-
-    if raw_value is None or not raw_value.strip():
-        if default is not None:
-            return default
-
-        raise ImproperlyConfigured(f"{variable_name} environment variable must be set")
-
-    try:
-        return int(raw_value)
-    except ValueError as error:
-        raise ImproperlyConfigured(f"{variable_name} must be an integer") from error
-
-
-def getenv_list(variable_name: str, default: str = "") -> list[str]:
-    """Read a comma-separated environment variable as a clean list."""
-    value = os.getenv(variable_name, default)
-    return [item.strip() for item in value.split(",") if item.strip()]
 
 
 APP_ENV = os.getenv("APP_ENV", "").strip().lower()
@@ -369,3 +331,5 @@ if DEBUG:
     DEBUG_TOOLBAR_CONFIG = {
         "SHOW_TOOLBAR_CALLBACK": lambda request: True,
     }
+
+init_sentry(dsn=os.getenv("SENTRY_DSN"), environment=APP_ENV)
