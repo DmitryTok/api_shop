@@ -8,54 +8,91 @@
 [![Ruff](https://img.shields.io/badge/-Ruff-%23E10098?style=for-the-badge&logo=ruff&logoColor=white&labelColor=0a0a0a)](https://docs.astral.sh/ruff/)
 [![isort](https://img.shields.io/badge/isort-enabled-brightgreen?style=for-the-badge&logo=isort&logoColor=white&labelColor=0a0a0a)](https://pycqa.github.io/isort/)
 
-# Online shop
+# WearlyShop API
+
+Django REST Framework backend for the WearlyShop e-commerce store. The frontend is a separate app (not in this repo).
+
+For deployment topology, the Celery worker, and Sentry, see [`docs/infra.md`](docs/infra.md).
 
 ## Run the project
 
 ---
 
-### Create .env file and fill with required data
+### Create a `.env` file
+
+Copy `.env.example` to `.env` and fill it in — it documents every variable `settings.py` reads, including security, Sentry, Cloudinary, Celery/Redis, and email (Resend). The minimal set to get a local stack running:
 
 ```
-SECRET=<SECRET_KEY>
-DB_ENGINE=<DB ENGINE postgres, mysql ...>
-DB_NAME=<database name>
-DB_USER=<database user>
+APP_ENV=local
+DEBUG=true
+
+SECRET=<a long random secret>
+ALLOWED_HOSTS=localhost,127.0.0.1
+
+DB_NAME=api_shop
+DB_USER=postgres
 DB_PASSWORD=<database password>
-DB_HOST=<database host>
-DB_PORT=<database port>
+DB_HOST=db
+DB_PORT=5432
 
-SUPER_LOGIN=superuser-email
-SUPER_PASSWORD=superuser-password
+REDIS_URL=redis://redis:6379/1
+CELERY_BROKER_URL=redis://redis:6379/0
+
+SUPER_LOGIN=<superuser email, optional>
+SUPER_PASSWORD=<superuser password, optional>
 ```
 
-### Run docker-compose file
+Leave `SENTRY_DSN` and the `CLOUDINARY_*` vars empty for local dev unless you specifically need them (Sentry never sends events when `APP_ENV=local`, regardless of `SENTRY_DSN`; media uploads will fail without Cloudinary credentials).
+
+### Run docker-compose
 
 ```
 docker compose up --build --force-recreate
 ```
 
+This starts Postgres, Redis, the Django dev server, and an nginx reverse proxy in front of it — all on `http://localhost:8080`. It only runs `collectstatic` and `migrate` on boot; it does **not** seed any data.
+
+### Seed data (optional, manual)
+
+```
+make seed         # products, categories, brands, variants, discounts, terms
+make seed-users   # 11 demo users (requires load_terms to have run first)
+make superuser    # creates SUPER_LOGIN/SUPER_PASSWORD as a superuser
+```
+
+Each of these targets is idempotent-guarded and safe to re-run.
+
+### Run background email tasks (Celery)
+
+Sending activation/password-reset emails is fire-and-forget via Celery, but **no worker runs automatically** — `docker-compose.yml` does not define one. Without a worker, emails are silently never sent. To process the queue locally:
+
+```
+uv run celery -A api_shop worker -l info
+```
+
+Run it from the `api_shop/` directory (i.e. `api_shop/api_shop/`'s parent), with the same `.env` loaded.
+
 ---
 
-### To stop container
+### To stop the containers
 
 ```
 ctrl + C
 ```
 
-### To stop container
+or, from another terminal:
 
 ```
-docker-compose stop
+docker compose stop
 ```
 
-### To delete container
+### To remove the containers and volumes
 
 ```
-docker-compose down -v
+docker compose down -v
 ```
 
-# Links
+## Links
 
 ```text
 --------------------------------------------------------------|
@@ -67,6 +104,18 @@ docker-compose down -v
 | --------    | --------------------------------------------- |
 | Redoc       |  http://localhost:8080/api/schema/redoc/      |
 | --------    | --------------------------------------------- |
-| Mailpit     |  http://localhost:8025                        |
+| Health      |  http://localhost:8080/health/                |
 | --------    | --------------------------------------------- |
 ```
+
+## Tests and linting
+
+```
+uv sync --group dev
+uv run pytest
+uv run ruff check --fix .
+uv run ruff format .
+uv run pre-commit run --all-files
+```
+
+Tests require a reachable Postgres **and** Redis (nothing is mocked).

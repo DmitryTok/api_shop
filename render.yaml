@@ -1,0 +1,194 @@
+envVarGroups:
+  - name: wearlyshop-shared
+    envVars:
+      - key: ALGORITHM
+        value: HS256
+      - key: MAX_PASSWORD_RESET_ATTEMPTS
+        value: "3"
+      - key: MAX_REFRESH_ATTEMPTS
+        value: "5"
+      - key: PASSWORD_RESET_TIMEOUT_HR
+        value: "24"
+      - key: REFRESH_TOKEN_TIMEOUT
+        value: "24"
+      - key: DJANGO_LOG_LEVEL
+        value: INFO
+      - key: SENTRY_TRACES_SAMPLE_RATE
+        value: "0.0"
+
+services:
+  # ---------------------------------------------------------------- staging
+  - name: wearlyshop-staging-web # TODO: confirm — was "server-setup-deploy"
+    type: web
+    runtime: docker
+    plan: free # last known value, confirm against the dashboard
+    region: frankfurt # last known value, confirm against the dashboard
+    branch: dev
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /health/
+    # Deploys go through GitHub Actions' deploy-staging job (only after
+    # lint+test pass), not Render's own git integration — avoids two
+    # independent deploy triggers racing each other.
+    autoDeployTrigger: "off"
+    envVarGroups:
+      - wearlyshop-shared
+    envVars:
+      - key: APP_ENV
+        value: staging
+      - key: DEBUG
+        value: "false"
+      - key: SECRET
+        sync: false
+      - key: ALLOWED_HOSTS
+        sync: false
+      - key: DATABASE_URL # Neon Postgres connection string
+        sync: false
+      - key: REDIS_URL # Upstash Redis, db 1 — Django cache/throttling
+        sync: false
+      - key: CELERY_BROKER_URL # Upstash Redis, db 0 — Celery queue
+        sync: false
+      - key: SENTRY_DSN
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: DEFAULT_FROM_EMAIL # must be on a Resend-verified domain
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false
+      - key: CSRF_TRUSTED_ORIGINS
+        sync: false
+      - key: SUPER_LOGIN
+        sync: false
+      - key: SUPER_PASSWORD
+        sync: false
+
+  - name: wearlyshop-staging-celery # TODO: confirm real name (docs/infra.md just calls it "api_shop_celery")
+    type: worker
+    runtime: docker
+    plan: free # confirm — docs/infra.md notes the host reports 16 CPUs regardless of plan; --pool=solo is what keeps this safe
+    region: frankfurt
+    branch: dev
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    # Overrides the image's entrypoint.sh (which would otherwise run
+    # migrate+nginx+gunicorn). Exact working command from docs/infra.md —
+    # --workdir=api_shop and --pool=solo are both load-bearing, see there for why.
+    dockerCommand: "celery --workdir=api_shop -A api_shop worker -l info --without-heartbeat --without-gossip --without-mingle --pool=solo"
+    autoDeployTrigger: "off"
+    envVarGroups:
+      - wearlyshop-shared
+    envVars:
+      - key: APP_ENV
+        value: staging
+      - key: DEBUG
+        value: "false"
+      - key: SECRET
+        sync: false
+      - key: ALLOWED_HOSTS # unused by the worker itself, but settings.py validates it at import regardless of process
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: CELERY_BROKER_URL
+        sync: false
+      - key: SENTRY_DSN
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: DEFAULT_FROM_EMAIL
+        sync: false
+
+  # ------------------------------------------------------------- production
+  - name: wearlyshop-production-web # TODO: confirm real name
+    type: web
+    runtime: docker
+    plan: free # TODO: confirm — production is unlikely to actually be on the free plan
+    region: frankfurt # TODO: confirm
+    branch: main
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /health/
+    autoDeployTrigger: "off"
+    envVarGroups:
+      - wearlyshop-shared
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: DEBUG
+        value: "false"
+      - key: SECRET
+        sync: false
+      - key: ALLOWED_HOSTS
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: CELERY_BROKER_URL
+        sync: false
+      - key: SENTRY_DSN
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: DEFAULT_FROM_EMAIL
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false
+      - key: CSRF_TRUSTED_ORIGINS
+        sync: false
+      - key: SUPER_LOGIN
+        sync: false
+      - key: SUPER_PASSWORD
+        sync: false
+
+  - name: wearlyshop-production-celery # TODO: confirm real name
+    type: worker
+    runtime: docker
+    plan: free # TODO: confirm
+    region: frankfurt # TODO: confirm
+    branch: main
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    dockerCommand: "celery --workdir=api_shop -A api_shop worker -l info --without-heartbeat --without-gossip --without-mingle --pool=solo"
+    autoDeployTrigger: "off"
+    envVarGroups:
+      - wearlyshop-shared
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: DEBUG
+        value: "false"
+      - key: SECRET
+        sync: false
+      - key: ALLOWED_HOSTS
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: CELERY_BROKER_URL
+        sync: false
+      - key: SENTRY_DSN
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: DEFAULT_FROM_EMAIL
+        sync: false
