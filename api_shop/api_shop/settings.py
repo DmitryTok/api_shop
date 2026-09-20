@@ -3,7 +3,7 @@ from datetime import timedelta
 from pathlib import Path
 
 import dj_database_url
-import sentry_sdk
+from addons.sentry import init_sentry
 from django.core.exceptions import ImproperlyConfigured
 from dotenv import load_dotenv
 
@@ -371,8 +371,4 @@ if DEBUG:
         "SHOW_TOOLBAR_CALLBACK": lambda request: True,
     }
 
-sentry_sdk.init(
-    dsn=os.getenv("SENTRY_DSN"),
-    environment=os.getenv("APP_ENV"),
-    send_default_pii=False,
-)
+init_sentry(dsn=os.getenv("SENTRY_DSN"), environment=APP_ENV)
