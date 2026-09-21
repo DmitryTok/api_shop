@@ -1,5 +1,3 @@
-from brands.models import Brand
-from categories.models import Category, Subcategory
 from django import forms
 from django_filters import rest_framework as filters
 
@@ -46,22 +44,22 @@ class ProductVariantFilter(filters.FilterSet):
         label="Max price",
         min_value=1,
     )
-    category = filters.ModelChoiceFilter(
-        field_name="product__subcategory__category",
-        queryset=Category.objects.all(),
+    category = filters.CharFilter(
+        field_name="product__subcategory__category__name",
+        lookup_expr="iexact",
         label="Category",
     )
-    subcategory = filters.ModelChoiceFilter(
-        field_name="product__subcategory",
-        queryset=Subcategory.objects.all(),
+    subcategory = filters.CharFilter(
+        field_name="product__subcategory__name",
+        lookup_expr="iexact",
         label="Subcategory",
-        method="filter_subcategory",
     )
-    brand = filters.ModelChoiceFilter(
-        field_name="product__brand",
-        queryset=Brand.objects.all(),
+    brand = filters.CharFilter(
+        field_name="product__brand__name",
+        lookup_expr="iexact",
         label="Brand",
     )
+
     in_stock = filters.BooleanFilter(method="filter_in_stock", label="In stock")
 
     def filter_sort_by(self, queryset, name, value):
@@ -76,14 +74,6 @@ class ProductVariantFilter(filters.FilterSet):
         if value:
             return queryset.filter(stock__gt=0)
         return queryset
-
-    def filter_subcategory(self, queryset, name, value):
-        category = self.data.get("category")
-
-        if category and str(value.category_id) != str(category):
-            return queryset.none()
-
-        return queryset.filter(product__subcategory=value)
 
     class Meta:
         model = ProductVariant
