@@ -7,7 +7,7 @@ from .serializers import ProductSerializer
 class ProductListAPIView(ListAPIView):
     queryset = Product.objects.select_related("brand", "subcategory").all()
     serializer_class = ProductSerializer
-    filterset_fields = ("brand", "subcategory", "is_active", "is_hidden")
+    filterset_fields = ("brand", "subcategory")
 
 
 class ProductRetrieveAPIView(RetrieveAPIView):

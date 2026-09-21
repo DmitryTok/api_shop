@@ -6,7 +6,14 @@ from .serializers import ProductVariantSerializer
 
 
 class ProductVariantListAPIView(ListAPIView):
-    queryset = ProductVariant.objects.select_related("product", "size", "color").all()
+    queryset = ProductVariant.objects.select_related(
+        "product",
+        "product__brand",
+        "product__subcategory",
+        "product__subcategory__category",
+        "size",
+        "color",
+    )
     serializer_class = ProductVariantSerializer
     filterset_class = ProductVariantFilter
 
