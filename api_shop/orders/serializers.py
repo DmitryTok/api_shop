@@ -13,12 +13,13 @@ class OrderItemSerializer(serializers.ModelSerializer):
             "price",
         )
 
+
 class OrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True, read_only=True)
     cart_item_ids = serializers.ListField(
-    child=serializers.IntegerField(),
-    allow_empty=False,
-    write_only=True,
+        child=serializers.IntegerField(),
+        allow_empty=False,
+        write_only=True,
     )
 
     class Meta:
@@ -46,4 +47,3 @@ class OrderSerializer(serializers.ModelSerializer):
             "total_amount": {"read_only": True},
             "created_at": {"read_only": True},
         }
-

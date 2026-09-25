@@ -1,16 +1,15 @@
-from django.contrib.auth import get_user_model
-from django.test import TestCase
-from rest_framework.test import APIClient
-
 from brands.models import Brand
 from categories.models import Category, Subcategory
 from colors.models import Color
-from products.models import Product
+from django.contrib.auth import get_user_model
+from django.test import TestCase
 from product_variants.models import ProductVariant
+from products.models import Product
+from rest_framework.test import APIClient
 from shopping_cart.models import CartItem, ShoppingCart
 from sizes.models import Size
-from orders.models import Order
 
+from orders.models import Order
 
 User = get_user_model()
 
@@ -88,7 +87,6 @@ class OrderCreateAPITest(TestCase):
             self.order_data,
             format="json",
         )
-       
 
         self.assertEqual(response.status_code, 201)
         self.variant.refresh_from_db()
@@ -139,7 +137,7 @@ class OrderCreateAPITest(TestCase):
         unavailable_variant.refresh_from_db()
 
         self.assertEqual(self.variant.stock, 8)
-        self.assertEqual(unavailable_variant.stock, 1) 
+        self.assertEqual(unavailable_variant.stock, 1)
 
     def test_checkout_rejects_invalid_cart_item(self):
         self.order_data["cart_item_ids"] = [
@@ -155,7 +153,7 @@ class OrderCreateAPITest(TestCase):
 
         self.assertEqual(response.status_code, 400)
         self.assertEqual(
-        response.data["detail"],
-        "Invalid cart items.",
+            response.data["detail"],
+            "Invalid cart items.",
         )
         self.assertFalse(Order.objects.exists())
