@@ -5,10 +5,10 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from product_variants.models import ProductVariant
 from products.models import Product
+from rest_framework import status
 from rest_framework.test import APIClient
 from shopping_cart.models import CartItem, ShoppingCart
 from sizes.models import Size
-from rest_framework import status
 
 from orders.models import Order
 
@@ -170,8 +170,8 @@ class OrderCreateAPITest(TestCase):
 
         self.assertEqual(response.status_code, 400)
         self.assertEqual(
-        str(response.data["cart_item_ids"][0]),
-        "Duplicate cart items.",
+            str(response.data["cart_item_ids"][0]),
+            "Duplicate cart items.",
         )
         self.assertFalse(Order.objects.exists())
 
@@ -180,17 +180,17 @@ class OrderCreateAPITest(TestCase):
 
         response = self.client.post(
             "/api/orders/checkout/",
-        {
-            "product_variant_id": self.variant.id,
-            "quantity": 2,
-            "guest_first_name": "John",
-            "guest_last_name": "Doe",
-            "guest_phone": "+380501234567",
-            "guest_email": "john@example.com",
-            "payment_method": "card",
-        },
-        format="json",
-    )
+            {
+                "product_variant_id": self.variant.id,
+                "quantity": 2,
+                "guest_first_name": "John",
+                "guest_last_name": "Doe",
+                "guest_phone": "+380501234567",
+                "guest_email": "john@example.com",
+                "payment_method": "card",
+            },
+            format="json",
+        )
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 

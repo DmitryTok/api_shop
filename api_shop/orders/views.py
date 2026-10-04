@@ -11,7 +11,6 @@ from .serializers import OrderSerializer
 
 
 class OrderCreateAPIView(APIView):
-
     @extend_schema(
         request=OrderSerializer,
         responses={201: OrderSerializer},
@@ -34,16 +33,20 @@ class OrderCreateAPIView(APIView):
                 cart__user=request.user,
             ).select_related("product_variant")
 
-            items = (
-                (item.product_variant, item.quantity)
-                for item in cart_items
-            )
+            items = ((item.product_variant, item.quantity) for item in cart_items)
         else:
             profile = None
 
-            variant = ProductVariant.objects.get(
+            variant = ProductVariant.objects.filter(
                 id=data.pop("product_variant_id")
-            )
+            ).first()
+
+            if variant is None:
+                return Response(
+                    {"detail": "Invalid product variant."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
             items = ((variant, data.pop("quantity")),)
 
         order_items = []

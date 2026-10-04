@@ -1,7 +1,7 @@
-from profiles.models import Profile
+from addons.mixins import TimeStampMixin
 from django.db import models
 from product_variants.models import ProductVariant
-from addons.mixins import TimeStampMixin
+from profiles.models import Profile
 
 
 class DeliveryMethod(models.TextChoices):
