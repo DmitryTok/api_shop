@@ -4,10 +4,6 @@ from product_variants.models import ProductVariant
 from profiles.models import Profile
 
 
-class DeliveryMethod(models.TextChoices):
-    NOVA_POST = "nova_post", "NovaPost"
-
-
 class PaymentMethod(models.TextChoices):
     CARD = "card", "Card"
     GOOGLE_PAY = "google_pay", "Google Pay"
