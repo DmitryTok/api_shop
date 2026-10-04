@@ -9,7 +9,6 @@ class OrderItemInline(admin.TabularInline):
     readonly_fields = (
         "product_variant",
         "quantity",
-        "price",
     )
 
 
@@ -17,27 +16,25 @@ class OrderItemInline(admin.TabularInline):
 class OrderAdmin(admin.ModelAdmin):
     list_display = (
         "id",
-        "user",
+        "profile",
         "total_amount",
         "status",
         "payment_status",
-        "delivery_method",
         "created_at",
     )
     list_filter = (
         "status",
         "payment_status",
-        "delivery_method",
         "payment_method",
     )
     search_fields = (
-        "user__email",
-        "first_name",
-        "last_name",
-        "phone",
+        "profile__user__email",
+        "profile__first_name",
+        "profile__last_name",
+        "profile__phone",
     )
     readonly_fields = (
-        "user",
+        "profile",
         "total_amount",
         "created_at",
     )
