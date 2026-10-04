@@ -1,6 +1,7 @@
-from django.conf import settings
+from profiles.models import Profile
 from django.db import models
 from product_variants.models import ProductVariant
+from addons.mixins import TimeStampMixin
 
 
 class DeliveryMethod(models.TextChoices):
@@ -27,23 +28,18 @@ class OrderStatus(models.TextChoices):
     CANCELLED = "cancelled", "Cancelled"
 
 
-class Order(models.Model):
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.PROTECT,
+class Order(TimeStampMixin):
+    profile = models.ForeignKey(
+        Profile,
+        on_delete=models.SET_NULL,
         related_name="orders",
+        null=True,
+        blank=True,
     )
-    first_name = models.CharField(max_length=100)
-    last_name = models.CharField(max_length=100)
-    phone = models.CharField(max_length=20)
-
-    delivery_method = models.CharField(
-        max_length=20,
-        choices=DeliveryMethod.choices,
-        default=DeliveryMethod.NOVA_POST,
-    )
-    city = models.CharField(max_length=100)
-    branch_number = models.CharField(max_length=20)
+    guest_first_name = models.CharField(max_length=100, blank=True)
+    guest_last_name = models.CharField(max_length=100, blank=True)
+    guest_phone = models.CharField(max_length=20, blank=True)
+    guest_email = models.EmailField(blank=True)
 
     payment_method = models.CharField(
         max_length=20,
@@ -64,7 +60,6 @@ class Order(models.Model):
         max_digits=10,
         decimal_places=2,
     )
-    created_at = models.DateTimeField(auto_now_add=True)
 
 
 class OrderItem(models.Model):
@@ -79,7 +74,3 @@ class OrderItem(models.Model):
         related_name="order_items",
     )
     quantity = models.PositiveIntegerField()
-    price = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-    )

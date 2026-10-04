@@ -8,6 +8,7 @@ from products.models import Product
 from rest_framework.test import APIClient
 from shopping_cart.models import CartItem, ShoppingCart
 from sizes.models import Size
+from rest_framework import status
 
 from orders.models import Order
 
@@ -71,12 +72,6 @@ class OrderCreateAPITest(TestCase):
             quantity=2,
         )
         self.order_data = {
-            "first_name": "Test",
-            "last_name": "User",
-            "phone": "+380991234567",
-            "delivery_method": "nova_post",
-            "city": "Kharkiv",
-            "branch_number": "1",
             "payment_method": "card",
             "cart_item_ids": [self.cart_item.id],
         }
@@ -107,7 +102,7 @@ class OrderCreateAPITest(TestCase):
 
         self.assertFalse(Order.objects.exists())
 
-    def test_checkout_skips_unavailable_item(self):
+    def test_checkout_rejects_order_if_one_item_is_unavailable(self):
         unavailable_variant = ProductVariant.objects.create(
             product=self.variant.product,
             size=self.variant.size,
@@ -121,22 +116,25 @@ class OrderCreateAPITest(TestCase):
             product_variant=unavailable_variant,
             quantity=2,
         )
+
         self.order_data["cart_item_ids"] = [
             self.cart_item.id,
             unavailable_cart_item.id,
         ]
+
         response = self.client.post(
             "/api/orders/checkout/",
             self.order_data,
             format="json",
         )
 
-        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.status_code, 400)
+        self.assertFalse(Order.objects.exists())
 
         self.variant.refresh_from_db()
         unavailable_variant.refresh_from_db()
 
-        self.assertEqual(self.variant.stock, 8)
+        self.assertEqual(self.variant.stock, 10)
         self.assertEqual(unavailable_variant.stock, 1)
 
     def test_checkout_rejects_invalid_cart_item(self):
@@ -153,7 +151,55 @@ class OrderCreateAPITest(TestCase):
 
         self.assertEqual(response.status_code, 400)
         self.assertEqual(
-            response.data["detail"],
+            str(response.data["cart_item_ids"][0]),
             "Invalid cart items.",
         )
         self.assertFalse(Order.objects.exists())
+
+    def test_checkout_rejects_duplicate_cart_items(self):
+        self.order_data["cart_item_ids"] = [
+            self.cart_item.id,
+            self.cart_item.id,
+        ]
+
+        response = self.client.post(
+            "/api/orders/checkout/",
+            self.order_data,
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+        str(response.data["cart_item_ids"][0]),
+        "Duplicate cart items.",
+        )
+        self.assertFalse(Order.objects.exists())
+
+    def test_guest_can_create_order(self):
+        self.client.force_authenticate(user=None)
+
+        response = self.client.post(
+            "/api/orders/checkout/",
+        {
+            "product_variant_id": self.variant.id,
+            "quantity": 2,
+            "guest_first_name": "John",
+            "guest_last_name": "Doe",
+            "guest_phone": "+380501234567",
+            "guest_email": "john@example.com",
+            "payment_method": "card",
+        },
+        format="json",
+    )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        order = Order.objects.get()
+        self.assertIsNone(order.profile)
+        self.assertEqual(order.guest_first_name, "John")
+        self.assertEqual(order.guest_last_name, "Doe")
+        self.assertEqual(order.guest_phone, "+380501234567")
+        self.assertEqual(order.guest_email, "john@example.com")
+
+        self.variant.refresh_from_db()
+        self.assertEqual(self.variant.stock, 8)
