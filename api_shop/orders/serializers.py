@@ -142,8 +142,7 @@ class OrderSerializer(serializers.ModelSerializer):
                     )
 
                 quantities = {
-                    item["product_variant_id"]: item["quantity"]
-                    for item in cart_items
+                    item["product_variant_id"]: item["quantity"] for item in cart_items
                 }
             else:
                 quantities = {
@@ -173,9 +172,7 @@ class OrderSerializer(serializers.ModelSerializer):
                     or variant.stock < quantity
                 ):
                     raise serializers.ValidationError(
-                        {
-                            "detail": f"{variant.sku} is unavailable."
-                        }
+                        {"detail": f"{variant.sku} is unavailable."}
                     )
 
                 total += variant.price * quantity
