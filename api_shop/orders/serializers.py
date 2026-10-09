@@ -1,3 +1,5 @@
+from django.db import transaction
+from product_variants.models import ProductVariant
 from product_variants.serializers import ProductVariantForFavoriteSerializer
 from rest_framework import serializers
 from shopping_cart.models import CartItem
@@ -68,21 +70,8 @@ class OrderSerializer(serializers.ModelSerializer):
         }
 
     def validate_cart_item_ids(self, value):
-        request = self.context["request"]
-
-        if not request.user.is_authenticated:
-            return value
-
         if len(value) != len(set(value)):
             raise serializers.ValidationError("Duplicate cart items.")
-
-        valid_items = CartItem.objects.filter(
-            id__in=value,
-            cart__user=request.user,
-        ).count()
-
-        if valid_items != len(value):
-            raise serializers.ValidationError("Invalid cart items.")
 
         return value
 
@@ -116,3 +105,110 @@ class OrderSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(errors)
 
         return attrs
+
+    def create(self, validated_data):
+        request = self.context["request"]
+        is_authenticated = request.user.is_authenticated
+
+        if is_authenticated:
+            profile = request.user.profile
+            cart_item_ids = validated_data.pop("cart_item_ids")
+        else:
+            profile = None
+            validated_data.pop("cart_item_ids", None)
+            product_variant_id = validated_data.pop("product_variant_id")
+            quantity = validated_data.pop("quantity")
+
+        with transaction.atomic():
+            cart_items = []
+
+            if is_authenticated:
+                cart_items = list(
+                    CartItem.objects.select_for_update()
+                    .filter(
+                        id__in=cart_item_ids,
+                        cart__user=request.user,
+                    )
+                    .values(
+                        "id",
+                        "product_variant_id",
+                        "quantity",
+                    )
+                )
+
+                if len(cart_items) != len(cart_item_ids):
+                    raise serializers.ValidationError(
+                        {"cart_item_ids": ["Invalid cart items."]}
+                    )
+
+                quantities = {
+                    item["product_variant_id"]: item["quantity"]
+                    for item in cart_items
+                }
+            else:
+                quantities = {
+                    product_variant_id: quantity,
+                }
+
+            variants = list(
+                ProductVariant.objects.select_for_update()
+                .filter(id__in=quantities)
+                .order_by("id")
+            )
+
+            if len(variants) != len(quantities):
+                raise serializers.ValidationError(
+                    {"detail": "Invalid product variant."}
+                )
+
+            total = 0
+            order_items = []
+
+            for variant in variants:
+                quantity = quantities[variant.id]
+
+                if (
+                    not variant.is_active
+                    or variant.price is None
+                    or variant.stock < quantity
+                ):
+                    raise serializers.ValidationError(
+                        {
+                            "detail": f"{variant.sku} is unavailable."
+                        }
+                    )
+
+                total += variant.price * quantity
+
+                order_items.append(
+                    OrderItem(
+                        product_variant=variant,
+                        quantity=quantity,
+                    )
+                )
+
+                variant.stock -= quantity
+
+            order = Order.objects.create(
+                profile=profile,
+                total_amount=total,
+                **validated_data,
+            )
+
+            for item in order_items:
+                item.order = order
+
+            OrderItem.objects.bulk_create(order_items)
+
+            ProductVariant.objects.bulk_update(
+                variants,
+                ["stock"],
+            )
+
+            if is_authenticated:
+                CartItem.objects.filter(
+                    id__in=cart_item_ids,
+                    cart__user=request.user,
+                ).delete()
+
+        return order
