@@ -3,7 +3,11 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .serializers import OrderSerializer
+from .serializers import (
+    AuthenticatedOrderSerializer,
+    GuestOrderSerializer,
+    OrderSerializer,
+)
 
 
 class OrderCreateAPIView(APIView):
@@ -12,7 +16,13 @@ class OrderCreateAPIView(APIView):
         responses={201: OrderSerializer},
     )
     def post(self, request):
-        serializer = OrderSerializer(
+        serializer_class = (
+            AuthenticatedOrderSerializer
+            if request.user.is_authenticated
+            else GuestOrderSerializer
+        )
+
+        serializer = serializer_class(
             data=request.data,
             context={"request": request},
         )

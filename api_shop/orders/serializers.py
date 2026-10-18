@@ -69,86 +69,8 @@ class OrderSerializer(serializers.ModelSerializer):
             "created_at": {"read_only": True},
         }
 
-    def validate_cart_item_ids(self, value):
-        if len(value) != len(set(value)):
-            raise serializers.ValidationError("Duplicate cart items.")
-
-        return value
-
-    def validate(self, attrs):
-        request = self.context["request"]
-
-        if request.user.is_authenticated:
-            if not attrs.get("cart_item_ids"):
-                raise serializers.ValidationError(
-                    {"cart_item_ids": "This field is required."}
-                )
-
-            return attrs
-
-        guest_fields = (
-            "guest_first_name",
-            "guest_last_name",
-            "guest_phone",
-            "guest_email",
-            "product_variant_id",
-            "quantity",
-        )
-
-        errors = {
-            field: "This field is required."
-            for field in guest_fields
-            if not attrs.get(field)
-        }
-
-        if errors:
-            raise serializers.ValidationError(errors)
-
-        return attrs
-
-    def create(self, validated_data):
-        request = self.context["request"]
-        is_authenticated = request.user.is_authenticated
-
-        if is_authenticated:
-            profile = request.user.profile
-            cart_item_ids = validated_data.pop("cart_item_ids")
-        else:
-            profile = None
-            validated_data.pop("cart_item_ids", None)
-            product_variant_id = validated_data.pop("product_variant_id")
-            quantity = validated_data.pop("quantity")
-
+    def _create_order(self, validated_data, quantities, profile, cart_item_ids=None):
         with transaction.atomic():
-            cart_items = []
-
-            if is_authenticated:
-                cart_items = list(
-                    CartItem.objects.select_for_update()
-                    .filter(
-                        id__in=cart_item_ids,
-                        cart__user=request.user,
-                    )
-                    .values(
-                        "id",
-                        "product_variant_id",
-                        "quantity",
-                    )
-                )
-
-                if len(cart_items) != len(cart_item_ids):
-                    raise serializers.ValidationError(
-                        {"cart_item_ids": ["Invalid cart items."]}
-                    )
-
-                quantities = {
-                    item["product_variant_id"]: item["quantity"] for item in cart_items
-                }
-            else:
-                quantities = {
-                    product_variant_id: quantity,
-                }
-
             variants = list(
                 ProductVariant.objects.select_for_update()
                 .filter(id__in=quantities)
@@ -202,10 +124,119 @@ class OrderSerializer(serializers.ModelSerializer):
                 ["stock"],
             )
 
-            if is_authenticated:
+            if cart_item_ids is not None:
                 CartItem.objects.filter(
                     id__in=cart_item_ids,
-                    cart__user=request.user,
+                    cart__user=self.context["request"].user,
                 ).delete()
 
         return order
+
+
+class AuthenticatedOrderSerializer(OrderSerializer):
+    class Meta(OrderSerializer.Meta):
+        fields = (
+            "id",
+            "cart_item_ids",
+            "payment_method",
+            "payment_status",
+            "status",
+            "total_amount",
+            "created_at",
+            "items",
+        )
+
+    def validate_cart_item_ids(self, value):
+        if len(value) != len(set(value)):
+            raise serializers.ValidationError("Duplicate cart items.")
+
+        return value
+
+    def validate(self, attrs):
+        cart_item_ids = attrs.get("cart_item_ids")
+
+        if not cart_item_ids:
+            raise serializers.ValidationError(
+                {"cart_item_ids": "This field is required."}
+            )
+
+        if CartItem.objects.filter(
+            id__in=cart_item_ids,
+            cart__user=self.context["request"].user,
+        ).count() != len(cart_item_ids):
+            raise serializers.ValidationError(
+                {"cart_item_ids": ["Invalid cart items."]}
+            )
+
+        return attrs
+
+    def create(self, validated_data):
+        request = self.context["request"]
+        cart_item_ids = validated_data.pop("cart_item_ids")
+
+        cart_items = CartItem.objects.filter(
+            id__in=cart_item_ids,
+            cart__user=request.user,
+        ).values("product_variant_id", "quantity")
+
+        quantities = {
+            item["product_variant_id"]: item["quantity"]
+            for item in cart_items
+        }
+
+        return self._create_order(
+            validated_data,
+            quantities,
+            request.user.profile,
+            cart_item_ids,
+        )
+
+
+class GuestOrderSerializer(OrderSerializer):
+    class Meta(OrderSerializer.Meta):
+        fields = (
+            "id",
+            "product_variant_id",
+            "quantity",
+            "guest_first_name",
+            "guest_last_name",
+            "guest_phone",
+            "guest_email",
+            "payment_method",
+            "payment_status",
+            "status",
+            "total_amount",
+            "created_at",
+            "items",
+        )
+
+    def validate(self, attrs):
+        guest_fields = (
+            "guest_first_name",
+            "guest_last_name",
+            "guest_phone",
+            "guest_email",
+            "product_variant_id",
+            "quantity",
+        )
+
+        errors = {
+            field: "This field is required."
+            for field in guest_fields
+            if not attrs.get(field)
+        }
+
+        if errors:
+            raise serializers.ValidationError(errors)
+
+        return attrs
+
+    def create(self, validated_data):
+        product_variant_id = validated_data.pop("product_variant_id")
+        quantity = validated_data.pop("quantity")
+
+        return self._create_order(
+            validated_data,
+            {product_variant_id: quantity},
+            None,
+        )
