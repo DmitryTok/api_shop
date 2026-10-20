@@ -180,8 +180,7 @@ class AuthenticatedOrderSerializer(OrderSerializer):
         ).values("product_variant_id", "quantity")
 
         quantities = {
-            item["product_variant_id"]: item["quantity"]
-            for item in cart_items
+            item["product_variant_id"]: item["quantity"] for item in cart_items
         }
 
         return self._create_order(
