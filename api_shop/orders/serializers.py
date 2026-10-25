@@ -1,6 +1,7 @@
 from django.db import transaction
 from product_variants.models import ProductVariant
 from product_variants.serializers import ProductVariantForFavoriteSerializer
+from profiles.models import Profile
 from rest_framework import serializers
 from shopping_cart.models import CartItem
 
@@ -69,7 +70,13 @@ class OrderSerializer(serializers.ModelSerializer):
             "created_at": {"read_only": True},
         }
 
-    def _create_order(self, validated_data, quantities, profile, cart_item_ids=None):
+    def _create_order(
+        self,
+        validated_data: dict,
+        quantities: dict[int, int],
+        profile: Profile | None,
+        cart_item_ids: list[int] | None = None,
+    ) -> Order:
         with transaction.atomic():
             variants = list(
                 ProductVariant.objects.select_for_update()
