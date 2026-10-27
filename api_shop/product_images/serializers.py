@@ -13,3 +13,14 @@ class ProductImageSerializer(serializers.ModelSerializer):
             "is_main",
             "sort_order",
         )
+
+
+class ProductImagesForFavoriteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProductImage
+        fields = (
+            "id",
+            "image",
+            "is_main",
+            "sort_order",
+        )

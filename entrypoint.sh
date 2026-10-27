@@ -8,6 +8,9 @@ python api_shop/manage.py collectstatic --no-input
 echo "--> Applying database migrations..."
 python api_shop/manage.py migrate
 
-echo "--> Starting Gunicorn..."
+export PORT="${PORT:-8000}"
+echo "--> Rendering nginx config for PORT=${PORT}..."
+envsubst '${PORT}' < /app/nginx/prod.conf.template > /etc/nginx/conf.d/default.conf
 
-exec /opt/venv/bin/gunicorn --bind 0.0.0.0:"${PORT:-8000}" --workers 3 --access-logfile - --chdir /app/api_shop api_shop.wsgi:application
+echo "--> Starting nginx + Gunicorn via supervisord..."
+exec supervisord -c /app/supervisord.conf

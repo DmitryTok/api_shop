@@ -24,6 +24,7 @@ class ProductVariantAdmin(admin.ModelAdmin):
         "color",
         "gender",
         "stock",
+        "price",
         "is_active",
     )
     search_fields = (

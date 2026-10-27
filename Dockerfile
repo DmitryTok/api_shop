@@ -20,10 +20,12 @@ RUN uv sync --locked --no-dev --no-install-project --no-cache
 FROM python:3.12.13-slim-bookworm AS runtime
 
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends curl && \
+    apt-get install -y --no-install-recommends curl nginx supervisor gettext-base && \
     rm -rf /var/lib/apt/lists/* && \
+    rm -f /etc/nginx/sites-enabled/default && \
     addgroup --system app && \
-    adduser --system --ingroup app --home /app app
+    adduser --system --ingroup app --home /app app && \
+    chown -R app:app /etc/nginx /var/lib/nginx /var/log/nginx /run
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \

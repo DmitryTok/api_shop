@@ -1,5 +1,3 @@
-import threading
-
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from django.shortcuts import get_object_or_404
@@ -23,7 +21,7 @@ from users.serializers import (
     ResendActivationCodeSerializer,
     UserRegisterSerializer,
 )
-from users.services.email import send_email_code
+from users.tasks import send_email_code_task
 from users.trottling import RefreshScopedThrottle
 
 User = get_user_model()
@@ -55,11 +53,7 @@ class RegistrationView(APIView):
         serializer.is_valid(raise_exception=True)
         new_user = serializer.save()
 
-        email_thread = threading.Thread(
-            target=send_email_code, args=(new_user, "activation", request)
-        )
-
-        email_thread.start()
+        send_email_code_task.delay(new_user.id, "activation")
 
         return Response(
             "Activation email has been sended", status=status.HTTP_201_CREATED
@@ -147,11 +141,7 @@ class ResendActivationCodeView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        email_thread = threading.Thread(
-            target=send_email_code, args=(user, "activation", request)
-        )
-
-        email_thread.start()
+        send_email_code_task.delay(user.id, "activation")
 
         return Response(
             {"detail": "A new activation code has been sent to your email."},
@@ -196,11 +186,7 @@ class PasswordResetRequestView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        email_thread = threading.Thread(
-            target=send_email_code, args=(user, "password_reset", request)
-        )
-
-        email_thread.start()
+        send_email_code_task.delay(user.id, "password_reset")
 
         return Response(
             {"detail": "Password reset code has been sent to your email."},

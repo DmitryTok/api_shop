@@ -9,8 +9,9 @@ from users.models import Term
 
 
 @pytest.mark.django_db
-def test_load_reference_data_populates_expected_records():
-    call_command("load_reference_data")
+def test_load_data_populates_expected_records():
+    call_command("load_data")
+    call_command("load_terms")
 
     assert Brand.objects.count() == 10
     assert Category.objects.count() == 3
@@ -21,10 +22,9 @@ def test_load_reference_data_populates_expected_records():
 
 
 @pytest.mark.django_db
-def test_load_reference_data_is_idempotent():
-    call_command("load_reference_data")
-    call_command("load_reference_data")
+def test_load_data_is_idempotent():
+    call_command("load_data")
+    call_command("load_data")
 
     assert Brand.objects.count() == 10
     assert Category.objects.count() == 3
-    assert Term.objects.filter(version="1.0").count() == 1

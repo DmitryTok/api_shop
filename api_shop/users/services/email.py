@@ -36,3 +36,4 @@ def send_email_code(user, task_type: str, request=None):
 
     except Exception:
         cache.delete(f"lock:{task_type}:{user.id}")
+        raise
