@@ -131,6 +131,7 @@ INSTALLED_APPS = [
     "currencies",
     "favorites",
     "shopping_cart",
+    "orders",
     "cloudinary_storage",
     "cloudinary",
 ]
@@ -278,6 +279,17 @@ SUPER_LOGIN = os.getenv("SUPER_LOGIN")
 SUPER_PASSWORD = os.getenv("SUPER_PASSWORD")
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# Currency used to price the cart and orders when a request does not pass
+# `currency_code`. Prices live in the currencies app, one row per currency.
+DEFAULT_CURRENCY_CODE = os.getenv("DEFAULT_CURRENCY_CODE", "UAH").strip().upper()
+
+if not (
+    len(DEFAULT_CURRENCY_CODE) == 3
+    and DEFAULT_CURRENCY_CODE.isascii()
+    and DEFAULT_CURRENCY_CODE.isalpha()
+):
+    raise ImproperlyConfigured("DEFAULT_CURRENCY_CODE must be a 3-letter currency code")
 
 EMAIL_BACKEND = "anymail.backends.resend.EmailBackend"
 
